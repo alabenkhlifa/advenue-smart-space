@@ -1,0 +1,1 @@
+- don't add your name on the commit messages

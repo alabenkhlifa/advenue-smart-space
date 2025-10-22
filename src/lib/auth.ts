@@ -1,12 +1,25 @@
 export type UserRole = 'advertiser' | 'screen-owner';
 
+export interface Venue {
+  id: string;
+  name: string;
+  type?: string;
+  address?: string;
+  city?: string;
+  region?: string; // Geographic region for analytics
+  country?: string;
+  screenCount?: number;
+  footTraffic?: string;
+}
+
 export interface User {
   id: string;
   email: string;
   role: UserRole;
   name: string;
   companyName?: string;
-  venueName?: string;
+  venueName?: string; // Legacy field for backwards compatibility
+  venues?: Venue[];
 }
 
 const STORAGE_KEY = 'advenue_user';
@@ -30,7 +43,10 @@ const DUMMY_USERS = {
       email: 'owner@advenue.com',
       role: 'screen-owner' as UserRole,
       name: 'Jane Owner',
-      venueName: 'Demo Cafe',
+      venues: [
+        { id: 'venue-1', name: 'Demo Cafe', type: 'cafe' },
+        { id: 'venue-2', name: 'Downtown Restaurant', type: 'restaurant' },
+      ],
     },
   },
 };
@@ -63,6 +79,7 @@ export const register = (data: {
   name: string;
   companyName?: string;
   venueName?: string;
+  venues?: Venue[];
 }): User => {
   // In a real app, this would make an API call
   // For demo purposes, we'll create a mock user
@@ -73,6 +90,7 @@ export const register = (data: {
     name: data.name,
     companyName: data.companyName,
     venueName: data.venueName,
+    venues: data.venues,
   };
 
   localStorage.setItem(STORAGE_KEY, JSON.stringify(user));

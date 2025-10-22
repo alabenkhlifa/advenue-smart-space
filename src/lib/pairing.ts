@@ -14,7 +14,8 @@ export interface PairedScreen {
   pairedAt: number;
   sessionToken: string;
   tokenExpiresAt: number;
-  venueName?: string;
+  venueName?: string; // Legacy field
+  venueId?: string;
   status: 'online' | 'offline';
   lastSeen: number;
 }
@@ -116,7 +117,8 @@ export const validateAndPairScreen = async (
   screenId: string,
   pairingCode: string,
   ownerId: string,
-  venueName?: string
+  venueName?: string,
+  venueId?: string
 ): Promise<{ success: boolean; error?: string; screen?: PairedScreen }> => {
   const requests = getPairingRequests();
   const request = requests[screenId];
@@ -164,6 +166,7 @@ export const validateAndPairScreen = async (
     sessionToken,
     tokenExpiresAt: Date.now() + TOKEN_EXPIRY_MS,
     venueName,
+    venueId,
     status: 'online',
     lastSeen: Date.now(),
   };

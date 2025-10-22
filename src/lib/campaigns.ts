@@ -10,11 +10,14 @@ export interface MediaFile {
   campaignId?: string; // Campaign ID for tracking (added when fetching media for display)
 }
 
+export type CampaignCategory = 'Food' | 'Clothing' | 'Hotel' | 'Entertainment' | 'Technology' | 'Health' | 'Other';
+
 export interface Campaign {
   id: string;
   advertiserId: string;
   name: string;
   description: string;
+  category?: CampaignCategory;
   budget?: number;
   status: 'draft' | 'active' | 'paused' | 'completed';
   media: MediaFile[];
@@ -29,6 +32,7 @@ export interface ScreenCampaignSettings {
   screenId: string;
   selectedCampaignIds: string[];
   displayAll: boolean;
+  selectedCategories?: CampaignCategory[]; // Filter campaigns by category
   rotationFrequency: number; // in seconds
   rotationMode: 'sequential' | 'random' | 'weighted';
   campaignPriorities?: Record<string, number>; // campaignId -> priority (1-10)
@@ -61,7 +65,8 @@ export const createCampaign = (
   name: string,
   description: string,
   budget?: number,
-  targetUrl?: string
+  targetUrl?: string,
+  category?: CampaignCategory
 ): Campaign => {
   const campaigns = getCampaigns();
 
@@ -70,6 +75,7 @@ export const createCampaign = (
     advertiserId,
     name,
     description,
+    category,
     budget,
     targetUrl,
     status: 'draft',
@@ -321,6 +327,13 @@ export const getScreenMedia = (screenId: string): MediaFile[] => {
   } else {
     campaignsToDisplay = allCampaigns.filter(c =>
       settings.selectedCampaignIds.includes(c.id)
+    );
+  }
+
+  // Filter by category if selected
+  if (settings.selectedCategories && settings.selectedCategories.length > 0) {
+    campaignsToDisplay = campaignsToDisplay.filter(c =>
+      c.category && settings.selectedCategories!.includes(c.category)
     );
   }
 

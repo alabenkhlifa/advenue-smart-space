@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { requireAuth, logout } from "@/lib/auth";
+import { requireAuth, logout, Venue } from "@/lib/auth";
 import { validateAndPairScreen, getOwnerScreens, unpairScreen, PairedScreen } from "@/lib/pairing";
-import { getActiveCampaigns, updateScreenCampaignSettings, getScreenCampaignSettings, Campaign } from "@/lib/campaigns";
+import { getActiveCampaigns, updateScreenCampaignSettings, getScreenCampaignSettings, Campaign, CampaignCategory } from "@/lib/campaigns";
 import { getScreenImpressions, calculateScreenRevenue } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Plus, Tv, TrendingUp, DollarSign, CheckCircle2, XCircle } from "lucide-react";
+import { LogOut, Plus, Tv, TrendingUp, DollarSign, CheckCircle2, XCircle, Building2 } from "lucide-react";
 import MediaThumbnail from "@/components/MediaThumbnail";
 
 const ScreenOwnerDashboard = () => {
@@ -24,7 +24,8 @@ const ScreenOwnerDashboard = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [isPairDialogOpen, setIsPairDialogOpen] = useState(false);
   const [selectedScreen, setSelectedScreen] = useState<PairedScreen | null>(null);
-  const [pairingData, setPairingData] = useState({ screenId: "", pairingCode: "" });
+  const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
+  const [pairingData, setPairingData] = useState({ screenId: "", pairingCode: "", venueId: "" });
   const [isPairing, setIsPairing] = useState(false);
   const [activeTab, setActiveTab] = useState("screens");
   const navigate = useNavigate();
@@ -37,6 +38,13 @@ const ScreenOwnerDashboard = () => {
       return;
     }
     setUser(currentUser);
+
+    // Set first venue as default if available
+    const venues = currentUser.venues || [];
+    if (venues.length > 0 && !selectedVenue) {
+      setSelectedVenue(venues[0]);
+    }
+
     loadScreens(currentUser.id);
     loadCampaigns();
   }, [navigate]);
@@ -60,11 +68,24 @@ const ScreenOwnerDashboard = () => {
     e.preventDefault();
     setIsPairing(true);
 
+    if (!pairingData.venueId) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please select a venue for this screen",
+      });
+      setIsPairing(false);
+      return;
+    }
+
+    const venue = (user.venues || []).find((v: Venue) => v.id === pairingData.venueId);
+
     const result = await validateAndPairScreen(
       pairingData.screenId,
       pairingData.pairingCode,
       user.id,
-      user.venueName
+      venue?.name,
+      pairingData.venueId
     );
 
     setIsPairing(false);
@@ -72,10 +93,10 @@ const ScreenOwnerDashboard = () => {
     if (result.success) {
       toast({
         title: "Screen Paired Successfully",
-        description: `Screen ${pairingData.screenId} has been paired to your account.`,
+        description: `Screen ${pairingData.screenId} has been paired to ${venue?.name}.`,
       });
       setIsPairDialogOpen(false);
-      setPairingData({ screenId: "", pairingCode: "" });
+      setPairingData({ screenId: "", pairingCode: "", venueId: "" });
       loadScreens(user.id);
     } else {
       toast({
@@ -129,12 +150,40 @@ const ScreenOwnerDashboard = () => {
     });
   };
 
+  const toggleCategorySelection = (screenId: string, category: CampaignCategory) => {
+    const settings = getScreenCampaignSettings(screenId);
+    const currentCategories = settings.selectedCategories || [];
+    const isSelected = currentCategories.includes(category);
+
+    const newCategories = isSelected
+      ? currentCategories.filter(c => c !== category)
+      : [...currentCategories, category];
+
+    updateScreenCampaignSettings({
+      ...settings,
+      selectedCategories: newCategories.length > 0 ? newCategories : undefined,
+    });
+
+    toast({
+      title: "Category Filter Updated",
+      description: isSelected ? `Removed ${category} filter` : `Added ${category} filter`,
+    });
+  };
+
   const handleManageCampaigns = (screen: PairedScreen) => {
     setSelectedScreen(screen);
     setActiveTab("campaigns");
   };
 
   if (!user) return null;
+
+  const venues = user.venues || [];
+  const hasMultipleVenues = venues.length > 1;
+
+  // Filter screens by selected venue
+  const filteredScreens = selectedVenue
+    ? screens.filter(screen => screen.venueId === selectedVenue.id)
+    : screens;
 
   return (
     <div className="min-h-screen bg-background">
@@ -150,7 +199,15 @@ const ScreenOwnerDashboard = () => {
           <div className="flex items-center gap-4">
             <div className="text-right">
               <p className="font-medium">{user.name}</p>
-              <p className="text-sm text-muted-foreground">{user.venueName}</p>
+              {hasMultipleVenues && selectedVenue && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Building2 size={14} />
+                  <span>{selectedVenue.name}</span>
+                </div>
+              )}
+              {!hasMultipleVenues && venues[0] && (
+                <p className="text-sm text-muted-foreground">{venues[0].name}</p>
+              )}
             </div>
             <Button variant="ghost" size="icon" onClick={handleLogout}>
               <LogOut size={20} />
@@ -169,7 +226,34 @@ const ScreenOwnerDashboard = () => {
 
           <TabsContent value="screens" className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-3xl font-bold">My Screens</h2>
+              <div className="flex items-center gap-4">
+                <h2 className="text-3xl font-bold">My Screens</h2>
+                {hasMultipleVenues && (
+                  <Select
+                    value={selectedVenue?.id || "all"}
+                    onValueChange={(value) => {
+                      if (value === "all") {
+                        setSelectedVenue(null);
+                      } else {
+                        const venue = venues.find((v: Venue) => v.id === value);
+                        setSelectedVenue(venue || null);
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue placeholder="Select venue" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Venues</SelectItem>
+                      {venues.map((venue: Venue) => (
+                        <SelectItem key={venue.id} value={venue.id}>
+                          {venue.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
               <Dialog open={isPairDialogOpen} onOpenChange={setIsPairDialogOpen}>
                 <DialogTrigger asChild>
                   <Button variant="hero">
@@ -185,6 +269,28 @@ const ScreenOwnerDashboard = () => {
                     </DialogDescription>
                   </DialogHeader>
                   <form onSubmit={handlePairScreen} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="venueSelect">Select Venue *</Label>
+                      <Select
+                        value={pairingData.venueId}
+                        onValueChange={(value) =>
+                          setPairingData({ ...pairingData, venueId: value })
+                        }
+                        required
+                      >
+                        <SelectTrigger id="venueSelect">
+                          <SelectValue placeholder="Choose a venue" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {venues.map((venue: Venue) => (
+                            <SelectItem key={venue.id} value={venue.id}>
+                              {venue.name}
+                              {venue.type && ` (${venue.type})`}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <div className="space-y-2">
                       <Label htmlFor="screenId">Screen ID *</Label>
                       <Input
@@ -218,7 +324,7 @@ const ScreenOwnerDashboard = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {screens.map((screen) => {
+              {filteredScreens.map((screen) => {
                 const settings = getScreenCampaignSettings(screen.screenId);
                 const impressions = getScreenImpressions(screen.screenId);
 
@@ -324,6 +430,20 @@ const ScreenOwnerDashboard = () => {
               })}
             </div>
 
+            {filteredScreens.length === 0 && screens.length > 0 && (
+              <Card className="p-12 text-center">
+                <Tv className="mx-auto mb-4 text-muted-foreground" size={64} />
+                <h3 className="text-xl font-semibold mb-2">No screens at this venue</h3>
+                <p className="text-muted-foreground mb-4">
+                  Pair a screen to this venue or select a different venue
+                </p>
+                <Button variant="hero" onClick={() => setIsPairDialogOpen(true)}>
+                  <Plus className="mr-2" size={18} />
+                  Pair Screen
+                </Button>
+              </Card>
+            )}
+
             {screens.length === 0 && (
               <Card className="p-12 text-center">
                 <Tv className="mx-auto mb-4 text-muted-foreground" size={64} />
@@ -393,6 +513,30 @@ const ScreenOwnerDashboard = () => {
                       }
                     />
                   </div>
+
+                  <div className="space-y-2">
+                    <Label>Filter by Category</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {(['Food', 'Clothing', 'Hotel', 'Entertainment', 'Technology', 'Health', 'Other'] as CampaignCategory[]).map((category) => {
+                        const settings = getScreenCampaignSettings(selectedScreen.screenId);
+                        const isSelected = settings.selectedCategories?.includes(category) || false;
+
+                        return (
+                          <Badge
+                            key={category}
+                            variant={isSelected ? "default" : "outline"}
+                            className="cursor-pointer hover:scale-105 transition-transform"
+                            onClick={() => toggleCategorySelection(selectedScreen.screenId, category)}
+                          >
+                            {category}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Click categories to filter campaigns. Leave empty to show all categories.
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -400,32 +544,45 @@ const ScreenOwnerDashboard = () => {
             {selectedScreen && (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {campaigns.map((campaign) => {
-                    const settings = selectedScreen
-                      ? getScreenCampaignSettings(selectedScreen.screenId)
-                      : null;
-                    const isSelected = settings
-                      ? settings.selectedCampaignIds.includes(campaign.id)
-                      : false;
+                  {(() => {
+                    const settings = getScreenCampaignSettings(selectedScreen.screenId);
 
-                    return (
+                    // Filter campaigns by selected categories
+                    let filteredCampaigns = campaigns;
+                    if (settings.selectedCategories && settings.selectedCategories.length > 0) {
+                      filteredCampaigns = campaigns.filter(c =>
+                        c.category && settings.selectedCategories!.includes(c.category)
+                      );
+                    }
+
+                    return filteredCampaigns.map((campaign) => {
+                      const isSelected = settings.selectedCampaignIds.includes(campaign.id);
+
+                      return (
                       <Card key={campaign.id} className="hover-lift">
                         <CardHeader>
                           <div className="flex items-start justify-between">
                             <CardTitle className="text-lg">{campaign.name}</CardTitle>
                             {selectedScreen && (
                               <Checkbox
-                                checked={isSelected || settings?.displayAll}
+                                checked={isSelected || settings.displayAll}
                                 onCheckedChange={() =>
                                   toggleCampaignSelection(selectedScreen.screenId, campaign.id)
                                 }
-                                disabled={settings?.displayAll}
+                                disabled={settings.displayAll}
                               />
                             )}
                           </div>
                           <CardDescription className="line-clamp-2">
                             {campaign.description}
                           </CardDescription>
+                          {campaign.category && (
+                            <div className="mt-2">
+                              <Badge variant="outline" className="text-xs">
+                                {campaign.category}
+                              </Badge>
+                            </div>
+                          )}
                         </CardHeader>
                         <CardContent>
                           <div className="flex items-center justify-between text-sm">
@@ -451,26 +608,81 @@ const ScreenOwnerDashboard = () => {
                         </CardContent>
                       </Card>
                     );
-                  })}
+                    });
+                  })()}
                 </div>
 
-                {campaigns.length === 0 && (
-                  <Card className="p-12 text-center">
-                    <p className="text-lg font-semibold mb-2">No Active Campaigns</p>
-                    <p className="text-muted-foreground">
-                      There are no active campaigns available. Check back later or contact advertisers to create and activate campaigns.
-                    </p>
-                  </Card>
-                )}
+                {(() => {
+                  const settings = getScreenCampaignSettings(selectedScreen.screenId);
+                  const hasCategories = settings.selectedCategories && settings.selectedCategories.length > 0;
+
+                  let filteredCampaigns = campaigns;
+                  if (hasCategories) {
+                    filteredCampaigns = campaigns.filter(c =>
+                      c.category && settings.selectedCategories!.includes(c.category)
+                    );
+                  }
+
+                  if (filteredCampaigns.length === 0 && campaigns.length > 0 && hasCategories) {
+                    return (
+                      <Card className="p-12 text-center border-dashed">
+                        <p className="text-lg font-semibold mb-2">No Campaigns Match Selected Categories</p>
+                        <p className="text-muted-foreground">
+                          No active campaigns found for the selected categories ({settings.selectedCategories!.join(', ')}). Try selecting different categories or clear the filter to see all campaigns.
+                        </p>
+                      </Card>
+                    );
+                  }
+
+                  if (campaigns.length === 0) {
+                    return (
+                      <Card className="p-12 text-center">
+                        <p className="text-lg font-semibold mb-2">No Active Campaigns</p>
+                        <p className="text-muted-foreground">
+                          There are no active campaigns available. Check back later or contact advertisers to create and activate campaigns.
+                        </p>
+                      </Card>
+                    );
+                  }
+
+                  return null;
+                })()}
               </>
             )}
           </TabsContent>
 
           <TabsContent value="revenue" className="space-y-6">
-            <h2 className="text-3xl font-bold">Revenue Overview</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-3xl font-bold">Revenue Overview</h2>
+              {hasMultipleVenues && (
+                <Select
+                  value={selectedVenue?.id || "all"}
+                  onValueChange={(value) => {
+                    if (value === "all") {
+                      setSelectedVenue(null);
+                    } else {
+                      const venue = venues.find((v: Venue) => v.id === value);
+                      setSelectedVenue(venue || null);
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Select venue" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Venues</SelectItem>
+                    {venues.map((venue: Venue) => (
+                      <SelectItem key={venue.id} value={venue.id}>
+                        {venue.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {screens.map((screen) => {
+              {filteredScreens.map((screen) => {
                 const revenue = calculateScreenRevenue(screen.screenId);
                 const impressions = getScreenImpressions(screen.screenId);
 
@@ -518,7 +730,7 @@ const ScreenOwnerDashboard = () => {
                     <span className="text-lg font-medium">Total Estimated Revenue:</span>
                     <span className="text-3xl font-bold text-primary">
                       $
-                      {screens
+                      {filteredScreens
                         .reduce(
                           (sum, screen) => sum + calculateScreenRevenue(screen.screenId),
                           0
@@ -527,7 +739,9 @@ const ScreenOwnerDashboard = () => {
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Based on all impressions across all screens
+                    {selectedVenue
+                      ? `Based on impressions at ${selectedVenue.name}`
+                      : "Based on all impressions across all screens"}
                   </p>
                 </div>
               </CardContent>

@@ -9,6 +9,7 @@ import {
   removeMediaFromCampaign,
   validateMediaFile,
   Campaign,
+  CampaignCategory,
 } from "@/lib/campaigns";
 import { getMediaFile, blobToDataUrl } from "@/lib/mediaStorage";
 import { getCampaignAnalytics, formatDuration } from "@/lib/analytics";
@@ -64,7 +65,8 @@ const AdvertiserDashboard = () => {
       formData.get("name") as string,
       formData.get("description") as string,
       parseFloat(formData.get("budget") as string) || undefined,
-      (formData.get("targetUrl") as string) || undefined
+      (formData.get("targetUrl") as string) || undefined,
+      (formData.get("category") as CampaignCategory) || undefined
     );
 
     setCampaigns([...campaigns, campaign]);
@@ -227,6 +229,23 @@ const AdvertiserDashboard = () => {
                       />
                     </div>
                     <div className="space-y-2">
+                      <Label htmlFor="category">Category</Label>
+                      <Select name="category">
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Food">Food</SelectItem>
+                          <SelectItem value="Clothing">Clothing</SelectItem>
+                          <SelectItem value="Hotel">Hotel</SelectItem>
+                          <SelectItem value="Entertainment">Entertainment</SelectItem>
+                          <SelectItem value="Technology">Technology</SelectItem>
+                          <SelectItem value="Health">Health</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
                       <Label htmlFor="targetUrl">Target URL (for QR codes)</Label>
                       <Input
                         id="targetUrl"
@@ -271,6 +290,13 @@ const AdvertiserDashboard = () => {
                     <CardDescription className="line-clamp-2">
                       {campaign.description}
                     </CardDescription>
+                    {campaign.category && (
+                      <div className="mt-2">
+                        <Badge variant="outline" className="text-xs">
+                          {campaign.category}
+                        </Badge>
+                      </div>
+                    )}
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {campaign.targetUrl && (
