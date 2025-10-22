@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -51,12 +52,16 @@ const Navigation = () => {
 
           {/* Desktop CTAs */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost" size="default">
-              Sign In
-            </Button>
-            <Button variant="hero" size="default">
-              Get Started
-            </Button>
+            <Link to="/login">
+              <Button variant="ghost" size="default">
+                Sign In
+              </Button>
+            </Link>
+            <Link to="/register/advertiser">
+              <Button variant="hero" size="default">
+                Get Started
+              </Button>
+            </Link>
           </div>
 
           {/* Mobile menu button */}
@@ -91,12 +96,16 @@ const Navigation = () => {
                 Contact
               </button>
               <div className="flex flex-col space-y-2 px-4 pt-2">
-                <Button variant="ghost" size="default" className="w-full">
-                  Sign In
-                </Button>
-                <Button variant="hero" size="default" className="w-full">
-                  Get Started
-                </Button>
+                <Link to="/login" className="w-full">
+                  <Button variant="ghost" size="default" className="w-full">
+                    Sign In
+                  </Button>
+                </Link>
+                <Link to="/register/advertiser" className="w-full">
+                  <Button variant="hero" size="default" className="w-full">
+                    Get Started
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>

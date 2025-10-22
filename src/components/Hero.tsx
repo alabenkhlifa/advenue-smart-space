@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Building2, TrendingUp } from "lucide-react";
 import heroImage from "@/assets/hero-image.jpg";
+import { Link } from "react-router-dom";
 
 const Hero = () => {
   const scrollToSection = (id: string) => {
@@ -56,29 +57,31 @@ const Hero = () => {
 
           {/* Dual CTAs */}
           <div className="flex flex-col sm:flex-row gap-4 mb-12 animate-fade-in-up">
-            <Button
-              variant="hero"
-              size="xl"
-              onClick={() => scrollToSection("contact")}
-              className="group relative overflow-hidden"
-            >
-              <span className="relative z-10 flex items-center">
-                For Advertisers
-                <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
-              </span>
-              <div className="absolute inset-0 bg-gradient-to-r from-primary-glow/0 via-primary-foreground/20 to-primary-glow/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
-            </Button>
-            <Button
-              variant="outline"
-              size="xl"
-              onClick={() => scrollToSection("contact")}
-              className="group relative overflow-hidden"
-            >
-              <span className="relative z-10 flex items-center">
-                For Venue Owners
-                <Building2 className="ml-2 group-hover:rotate-12 transition-transform" />
-              </span>
-            </Button>
+            <Link to="/register/advertiser">
+              <Button
+                variant="hero"
+                size="xl"
+                className="group relative overflow-hidden"
+              >
+                <span className="relative z-10 flex items-center">
+                  For Advertisers
+                  <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-primary-glow/0 via-primary-foreground/20 to-primary-glow/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
+              </Button>
+            </Link>
+            <Link to="/register/screen-owner">
+              <Button
+                variant="outline"
+                size="xl"
+                className="group relative overflow-hidden"
+              >
+                <span className="relative z-10 flex items-center">
+                  For Venue Owners
+                  <Building2 className="ml-2 group-hover:rotate-12 transition-transform" />
+                </span>
+              </Button>
+            </Link>
           </div>
 
           {/* Stats */}
