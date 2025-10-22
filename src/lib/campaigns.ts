@@ -7,6 +7,7 @@ export interface MediaFile {
   duration?: number; // for videos, in seconds
   uploadedAt: number;
   storedInIndexedDB?: boolean; // Flag to indicate storage location
+  campaignId?: string; // Campaign ID for tracking (added when fetching media for display)
 }
 
 export interface Campaign {
@@ -17,6 +18,7 @@ export interface Campaign {
   budget?: number;
   status: 'draft' | 'active' | 'paused' | 'completed';
   media: MediaFile[];
+  targetUrl?: string; // URL to redirect users when they scan the QR code
   createdAt: number;
   updatedAt: number;
   startDate?: number;
@@ -58,7 +60,8 @@ export const createCampaign = (
   advertiserId: string,
   name: string,
   description: string,
-  budget?: number
+  budget?: number,
+  targetUrl?: string
 ): Campaign => {
   const campaigns = getCampaigns();
 
@@ -68,6 +71,7 @@ export const createCampaign = (
     name,
     description,
     budget,
+    targetUrl,
     status: 'draft',
     media: [],
     createdAt: Date.now(),
@@ -320,10 +324,14 @@ export const getScreenMedia = (screenId: string): MediaFile[] => {
     );
   }
 
-  // Collect all media from selected campaigns
+  // Collect all media from selected campaigns and tag with campaignId
   const media: MediaFile[] = [];
   campaignsToDisplay.forEach(campaign => {
-    media.push(...campaign.media);
+    const taggedMedia = campaign.media.map(m => ({
+      ...m,
+      campaignId: campaign.id,
+    }));
+    media.push(...taggedMedia);
   });
 
   // Apply rotation mode
@@ -334,8 +342,12 @@ export const getScreenMedia = (screenId: string): MediaFile[] => {
     const weighted: MediaFile[] = [];
     campaignsToDisplay.forEach(campaign => {
       const priority = settings.campaignPriorities?.[campaign.id] || 1;
+      const taggedMedia = campaign.media.map(m => ({
+        ...m,
+        campaignId: campaign.id,
+      }));
       for (let i = 0; i < priority; i++) {
-        weighted.push(...campaign.media);
+        weighted.push(...taggedMedia);
       }
     });
     return weighted;

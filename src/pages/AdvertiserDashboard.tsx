@@ -12,6 +12,7 @@ import {
 } from "@/lib/campaigns";
 import { getMediaFile, blobToDataUrl } from "@/lib/mediaStorage";
 import { getCampaignAnalytics, formatDuration } from "@/lib/analytics";
+import { getCampaignQRAnalytics, calculateScanConversionRate } from "@/lib/qrAnalytics";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +23,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Plus, Upload, Play, Pause, BarChart3, Image as ImageIcon, Video, X } from "lucide-react";
+import { LogOut, Plus, Upload, Play, Pause, BarChart3, Image as ImageIcon, Video, X, QrCode } from "lucide-react";
 import MediaThumbnail from "@/components/MediaThumbnail";
 
 const AdvertiserDashboard = () => {
@@ -62,7 +63,8 @@ const AdvertiserDashboard = () => {
       user.id,
       formData.get("name") as string,
       formData.get("description") as string,
-      parseFloat(formData.get("budget") as string) || undefined
+      parseFloat(formData.get("budget") as string) || undefined,
+      (formData.get("targetUrl") as string) || undefined
     );
 
     setCampaigns([...campaigns, campaign]);
@@ -225,6 +227,18 @@ const AdvertiserDashboard = () => {
                       />
                     </div>
                     <div className="space-y-2">
+                      <Label htmlFor="targetUrl">Target URL (for QR codes)</Label>
+                      <Input
+                        id="targetUrl"
+                        name="targetUrl"
+                        type="url"
+                        placeholder="https://example.com/landing-page"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Users who scan the QR code will be redirected to this URL
+                      </p>
+                    </div>
+                    <div className="space-y-2">
                       <Label htmlFor="budget">Budget ($)</Label>
                       <Input
                         id="budget"
@@ -259,6 +273,23 @@ const AdvertiserDashboard = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
+                    {campaign.targetUrl && (
+                      <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
+                        <QrCode size={16} className="text-primary flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-muted-foreground">Target URL:</p>
+                          <a
+                            href={campaign.targetUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-primary hover:underline truncate block"
+                          >
+                            {campaign.targetUrl}
+                          </a>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Media Files:</span>
                       <span className="font-medium">{campaign.media.length}</span>
@@ -360,6 +391,8 @@ const AdvertiserDashboard = () => {
 
             {campaigns.map((campaign) => {
               const analytics = getCampaignAnalytics(campaign.id);
+              const qrAnalytics = getCampaignQRAnalytics(campaign.id);
+              const conversionRate = calculateScanConversionRate(campaign.id, analytics.totalImpressions);
 
               return (
                 <Card key={campaign.id}>
@@ -367,38 +400,83 @@ const AdvertiserDashboard = () => {
                     <CardTitle>{campaign.name}</CardTitle>
                     <CardDescription>{campaign.description}</CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="bg-muted/50 rounded-lg p-4">
-                        <p className="text-sm text-muted-foreground mb-1">Total Impressions</p>
-                        <p className="text-3xl font-bold text-primary">
-                          {analytics.totalImpressions}
-                        </p>
-                      </div>
-                      <div className="bg-muted/50 rounded-lg p-4">
-                        <p className="text-sm text-muted-foreground mb-1">Total Duration</p>
-                        <p className="text-2xl font-bold text-accent">
-                          {formatDuration(analytics.totalDuration)}
-                        </p>
-                      </div>
-                      <div className="bg-muted/50 rounded-lg p-4">
-                        <p className="text-sm text-muted-foreground mb-1">Screens</p>
-                        <p className="text-3xl font-bold text-foreground">
-                          {Object.keys(analytics.screenBreakdown).length}
-                        </p>
-                      </div>
-                      <div className="bg-muted/50 rounded-lg p-4">
-                        <p className="text-sm text-muted-foreground mb-1">Avg per Screen</p>
-                        <p className="text-3xl font-bold text-foreground">
-                          {Object.keys(analytics.screenBreakdown).length > 0
-                            ? Math.round(
-                                analytics.totalImpressions /
-                                  Object.keys(analytics.screenBreakdown).length
-                              )
-                            : 0}
-                        </p>
+                  <CardContent className="space-y-6">
+                    {/* Impression Analytics */}
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3">Impressions</h3>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="bg-muted/50 rounded-lg p-4">
+                          <p className="text-sm text-muted-foreground mb-1">Total Impressions</p>
+                          <p className="text-3xl font-bold text-primary">
+                            {analytics.totalImpressions}
+                          </p>
+                        </div>
+                        <div className="bg-muted/50 rounded-lg p-4">
+                          <p className="text-sm text-muted-foreground mb-1">Total Duration</p>
+                          <p className="text-2xl font-bold text-accent">
+                            {formatDuration(analytics.totalDuration)}
+                          </p>
+                        </div>
+                        <div className="bg-muted/50 rounded-lg p-4">
+                          <p className="text-sm text-muted-foreground mb-1">Screens</p>
+                          <p className="text-3xl font-bold text-foreground">
+                            {Object.keys(analytics.screenBreakdown).length}
+                          </p>
+                        </div>
+                        <div className="bg-muted/50 rounded-lg p-4">
+                          <p className="text-sm text-muted-foreground mb-1">Avg per Screen</p>
+                          <p className="text-3xl font-bold text-foreground">
+                            {Object.keys(analytics.screenBreakdown).length > 0
+                              ? Math.round(
+                                  analytics.totalImpressions /
+                                    Object.keys(analytics.screenBreakdown).length
+                                )
+                              : 0}
+                          </p>
+                        </div>
                       </div>
                     </div>
+
+                    {/* QR Code Analytics */}
+                    {campaign.targetUrl && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-3">
+                          <QrCode className="text-primary" size={20} />
+                          <h3 className="text-lg font-semibold">QR Code Scans</h3>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+                            <p className="text-sm text-muted-foreground mb-1">Total Scans</p>
+                            <p className="text-3xl font-bold text-primary">
+                              {qrAnalytics.totalScans}
+                            </p>
+                          </div>
+                          <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+                            <p className="text-sm text-muted-foreground mb-1">Conversion Rate</p>
+                            <p className="text-2xl font-bold text-primary">
+                              {conversionRate.toFixed(2)}%
+                            </p>
+                          </div>
+                          <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+                            <p className="text-sm text-muted-foreground mb-1">Screens with Scans</p>
+                            <p className="text-3xl font-bold text-foreground">
+                              {Object.keys(qrAnalytics.screenBreakdown).length}
+                            </p>
+                          </div>
+                          <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+                            <p className="text-sm text-muted-foreground mb-1">Avg Scans/Screen</p>
+                            <p className="text-3xl font-bold text-foreground">
+                              {Object.keys(qrAnalytics.screenBreakdown).length > 0
+                                ? Math.round(
+                                    qrAnalytics.totalScans /
+                                      Object.keys(qrAnalytics.screenBreakdown).length
+                                  )
+                                : 0}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               );

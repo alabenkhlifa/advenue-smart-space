@@ -6,11 +6,12 @@ import {
   validateSessionToken,
   hashPairingCode,
 } from "@/lib/pairing";
-import { getScreenMedia, getScreenCampaignSettings } from "@/lib/campaigns";
+import { getScreenMedia, getScreenCampaignSettings, getCampaignById } from "@/lib/campaigns";
 import { startImpression, endImpression } from "@/lib/analytics";
 import { getMediaFile, blobToDataUrl } from "@/lib/mediaStorage";
 import { Card } from "@/components/ui/card";
 import { Tv, Shield, Clock } from "lucide-react";
+import QRCodeOverlay from "@/components/QRCodeOverlay";
 
 const ScreenDisplay = () => {
   const [screenId, setScreenId] = useState<string>("");
@@ -249,8 +250,12 @@ const ScreenDisplay = () => {
       }
     }
 
+    // Get campaign to check if it has a target URL for QR code
+    const campaign = currentMedia.campaignId ? getCampaignById(currentMedia.campaignId) : null;
+    const showQRCode = !!(campaign && campaign.targetUrl);
+
     return (
-      <div className="min-h-screen w-full bg-black flex items-center justify-center">
+      <div className="min-h-screen w-full bg-black flex items-center justify-center relative">
         {currentMedia.type === "image" ? (
           <img
             src={currentUrl}
@@ -264,6 +269,16 @@ const ScreenDisplay = () => {
             muted
             loop={shouldLoop}
             className="w-full h-full object-contain"
+          />
+        )}
+
+        {/* QR Code Overlay */}
+        {showQRCode && currentMedia.campaignId && (
+          <QRCodeOverlay
+            screenId={screenId}
+            campaignId={currentMedia.campaignId}
+            mediaId={currentMedia.id}
+            enabled={showQRCode}
           />
         )}
       </div>
