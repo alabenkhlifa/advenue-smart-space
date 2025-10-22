@@ -12,14 +12,24 @@ const Hero = () => {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
+      {/* Animated Mesh Background */}
+      <div className="absolute inset-0 z-0 gradient-mesh" />
+      
       {/* Background Image with Overlay */}
       <div className="absolute inset-0 z-0">
         <img
           src={heroImage}
           alt="Modern restaurant with digital advertising screens"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover opacity-30"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/90 to-background/70" />
+        <div className="absolute inset-0 bg-gradient-to-br from-background/98 via-background/95 to-primary/10" />
+      </div>
+      
+      {/* Floating orbs for visual interest */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl animate-float" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-float" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-primary-glow/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }} />
       </div>
 
       {/* Content */}
@@ -50,41 +60,46 @@ const Hero = () => {
               variant="hero"
               size="xl"
               onClick={() => scrollToSection("contact")}
-              className="group"
+              className="group relative overflow-hidden"
             >
-              For Advertisers
-              <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
+              <span className="relative z-10 flex items-center">
+                For Advertisers
+                <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
+              </span>
+              <div className="absolute inset-0 bg-gradient-to-r from-primary-glow/0 via-primary-foreground/20 to-primary-glow/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
             </Button>
             <Button
               variant="outline"
               size="xl"
               onClick={() => scrollToSection("contact")}
-              className="group"
+              className="group relative overflow-hidden"
             >
-              For Venue Owners
-              <Building2 className="ml-2" />
+              <span className="relative z-10 flex items-center">
+                For Venue Owners
+                <Building2 className="ml-2 group-hover:rotate-12 transition-transform" />
+              </span>
             </Button>
           </div>
 
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6 animate-fade-in">
-            <div className="bg-card/50 backdrop-blur-sm rounded-lg p-4 border border-border">
+            <div className="bg-card/60 backdrop-blur-md rounded-xl p-5 border border-primary/20 hover-lift hover-glow group">
               <div className="flex items-center space-x-2 text-primary mb-1">
-                <TrendingUp size={20} />
+                <TrendingUp size={20} className="group-hover:scale-110 transition-transform" />
                 <span className="text-2xl font-bold">500+</span>
               </div>
               <p className="text-sm text-muted-foreground">Active Venues</p>
             </div>
-            <div className="bg-card/50 backdrop-blur-sm rounded-lg p-4 border border-border">
+            <div className="bg-card/60 backdrop-blur-md rounded-xl p-5 border border-accent/20 hover-lift shadow-glow-accent group">
               <div className="flex items-center space-x-2 text-accent mb-1">
-                <TrendingUp size={20} />
+                <TrendingUp size={20} className="group-hover:scale-110 transition-transform" />
                 <span className="text-2xl font-bold">95%</span>
               </div>
               <p className="text-sm text-muted-foreground">Campaign Success</p>
             </div>
-            <div className="bg-card/50 backdrop-blur-sm rounded-lg p-4 border border-border col-span-2 md:col-span-1">
+            <div className="bg-card/60 backdrop-blur-md rounded-xl p-5 border border-primary/20 hover-lift hover-glow group col-span-2 md:col-span-1">
               <div className="flex items-center space-x-2 text-primary mb-1">
-                <TrendingUp size={20} />
+                <TrendingUp size={20} className="group-hover:scale-110 transition-transform" />
                 <span className="text-2xl font-bold">$2M+</span>
               </div>
               <p className="text-sm text-muted-foreground">Revenue Generated</p>

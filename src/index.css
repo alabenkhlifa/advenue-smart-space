@@ -17,19 +17,20 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 215 25% 12%;
 
-    --primary: 205 85% 42%;
+    --primary: 270 85% 60%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 205 90% 55%;
+    --primary-glow: 280 90% 70%;
+    --primary-dark: 270 70% 45%;
 
-    --secondary: 210 17% 95%;
-    --secondary-foreground: 215 25% 12%;
+    --secondary: 270 25% 95%;
+    --secondary-foreground: 270 25% 12%;
 
-    --muted: 210 17% 95%;
-    --muted-foreground: 215 15% 45%;
+    --muted: 270 15% 95%;
+    --muted-foreground: 270 10% 45%;
 
-    --accent: 28 95% 55%;
+    --accent: 330 85% 60%;
     --accent-foreground: 0 0% 100%;
-    --accent-glow: 28 100% 65%;
+    --accent-glow: 340 90% 70%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
@@ -41,15 +42,20 @@ All colors MUST be HSL.
     --radius: 0.75rem;
     
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(205 85% 42%) 0%, hsl(205 90% 55%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(28 95% 55%) 0%, hsl(28 100% 65%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(205 85% 42%) 0%, hsl(205 75% 50%) 50%, hsl(28 95% 55%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(270 85% 60%) 0%, hsl(280 90% 70%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(330 85% 60%) 0%, hsl(340 90% 70%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(270 85% 60%) 0%, hsl(280 75% 65%) 50%, hsl(330 85% 60%) 100%);
+    --gradient-mesh: radial-gradient(at 0% 0%, hsl(270 85% 60% / 0.2) 0px, transparent 50%),
+                     radial-gradient(at 100% 0%, hsl(330 85% 60% / 0.2) 0px, transparent 50%),
+                     radial-gradient(at 100% 100%, hsl(280 90% 70% / 0.2) 0px, transparent 50%),
+                     radial-gradient(at 0% 100%, hsl(270 70% 45% / 0.2) 0px, transparent 50%);
     
     /* Shadows */
-    --shadow-sm: 0 2px 8px -2px hsl(205 85% 42% / 0.1);
-    --shadow-md: 0 8px 24px -4px hsl(205 85% 42% / 0.15);
-    --shadow-lg: 0 16px 48px -8px hsl(205 85% 42% / 0.2);
-    --shadow-glow: 0 0 32px hsl(205 90% 55% / 0.3);
+    --shadow-sm: 0 2px 8px -2px hsl(270 85% 60% / 0.15);
+    --shadow-md: 0 8px 24px -4px hsl(270 85% 60% / 0.2);
+    --shadow-lg: 0 16px 48px -8px hsl(270 85% 60% / 0.25);
+    --shadow-glow: 0 0 40px hsl(280 90% 70% / 0.4);
+    --shadow-glow-accent: 0 0 40px hsl(330 85% 60% / 0.4);
     
     /* Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -84,19 +90,20 @@ All colors MUST be HSL.
     --popover: 215 28% 12%;
     --popover-foreground: 210 20% 98%;
 
-    --primary: 205 90% 55%;
+    --primary: 270 90% 65%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 205 95% 65%;
+    --primary-glow: 280 95% 75%;
+    --primary-dark: 270 80% 50%;
 
-    --secondary: 215 25% 18%;
-    --secondary-foreground: 210 20% 98%;
+    --secondary: 270 20% 18%;
+    --secondary-foreground: 270 15% 98%;
 
-    --muted: 215 25% 18%;
-    --muted-foreground: 215 15% 65%;
+    --muted: 270 20% 18%;
+    --muted-foreground: 270 10% 65%;
 
-    --accent: 28 95% 55%;
+    --accent: 330 90% 65%;
     --accent-foreground: 0 0% 100%;
-    --accent-glow: 28 100% 65%;
+    --accent-glow: 340 95% 75%;
 
     --destructive: 0 62.8% 50%;
     --destructive-foreground: 0 0% 100%;
@@ -106,15 +113,20 @@ All colors MUST be HSL.
     --ring: 205 90% 55%;
     
     /* Dark mode gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(205 90% 55%) 0%, hsl(205 95% 65%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(28 95% 55%) 0%, hsl(28 100% 65%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(205 90% 55%) 0%, hsl(205 85% 60%) 50%, hsl(28 95% 55%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(270 90% 65%) 0%, hsl(280 95% 75%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(330 90% 65%) 0%, hsl(340 95% 75%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(270 90% 65%) 0%, hsl(280 85% 70%) 50%, hsl(330 90% 65%) 100%);
+    --gradient-mesh: radial-gradient(at 0% 0%, hsl(270 90% 65% / 0.15) 0px, transparent 50%),
+                     radial-gradient(at 100% 0%, hsl(330 90% 65% / 0.15) 0px, transparent 50%),
+                     radial-gradient(at 100% 100%, hsl(280 95% 75% / 0.15) 0px, transparent 50%),
+                     radial-gradient(at 0% 100%, hsl(270 80% 50% / 0.15) 0px, transparent 50%);
     
     /* Dark shadows */
-    --shadow-sm: 0 2px 8px -2px hsl(0 0% 0% / 0.3);
-    --shadow-md: 0 8px 24px -4px hsl(0 0% 0% / 0.4);
-    --shadow-lg: 0 16px 48px -8px hsl(0 0% 0% / 0.5);
-    --shadow-glow: 0 0 32px hsl(205 90% 55% / 0.4);
+    --shadow-sm: 0 2px 8px -2px hsl(0 0% 0% / 0.4);
+    --shadow-md: 0 8px 24px -4px hsl(0 0% 0% / 0.5);
+    --shadow-lg: 0 16px 48px -8px hsl(0 0% 0% / 0.6);
+    --shadow-glow: 0 0 40px hsl(270 90% 65% / 0.5);
+    --shadow-glow-accent: 0 0 40px hsl(330 90% 65% / 0.5);
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -153,8 +165,16 @@ All colors MUST be HSL.
     background: var(--gradient-hero);
   }
   
+  .gradient-mesh {
+    background: var(--gradient-mesh);
+  }
+  
   .shadow-glow {
     box-shadow: var(--shadow-glow);
+  }
+  
+  .shadow-glow-accent {
+    box-shadow: var(--shadow-glow-accent);
   }
   
   .transition-smooth {
@@ -163,5 +183,13 @@ All colors MUST be HSL.
   
   .transition-bounce {
     transition: var(--transition-bounce);
+  }
+  
+  .hover-lift {
+    @apply transition-smooth hover:-translate-y-2 hover:shadow-lg;
+  }
+  
+  .hover-glow {
+    @apply transition-smooth hover:shadow-glow;
   }
 }

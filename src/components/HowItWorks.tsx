@@ -85,18 +85,18 @@ const HowItWorks = () => {
               {advertiserSteps.map((step, index) => (
                 <Card
                   key={index}
-                  className="p-6 flex items-start space-x-4 hover:shadow-md transition-smooth animate-slide-in-right"
+                  className="p-6 flex items-start space-x-4 hover-lift hover-glow animate-slide-in-right group border-primary/20"
                   style={{ animationDelay: `${index * 0.15}s` }}
                 >
                   <div className="flex-shrink-0">
-                    <div className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center text-primary-foreground font-bold text-lg">
+                    <div className="w-14 h-14 rounded-full gradient-primary flex items-center justify-center text-primary-foreground font-bold text-lg shadow-glow group-hover:scale-110 transition-transform">
                       {index + 1}
                     </div>
                   </div>
                   <div className="flex-grow">
                     <div className="flex items-center mb-2">
-                      <step.icon className="text-primary mr-2" size={20} />
-                      <h4 className="text-lg font-semibold">{step.title}</h4>
+                      <step.icon className="text-primary mr-2 group-hover:scale-110 transition-transform" size={22} />
+                      <h4 className="text-lg font-semibold group-hover:text-primary transition-colors">{step.title}</h4>
                     </div>
                     <p className="text-muted-foreground">{step.description}</p>
                   </div>
@@ -127,18 +127,18 @@ const HowItWorks = () => {
               {venueSteps.map((step, index) => (
                 <Card
                   key={index}
-                  className="p-6 flex items-start space-x-4 hover:shadow-md transition-smooth animate-slide-in-right"
+                  className="p-6 flex items-start space-x-4 hover-lift shadow-glow-accent animate-slide-in-right group border-accent/20"
                   style={{ animationDelay: `${index * 0.15}s` }}
                 >
                   <div className="flex-shrink-0">
-                    <div className="w-12 h-12 rounded-full gradient-accent flex items-center justify-center text-accent-foreground font-bold text-lg">
+                    <div className="w-14 h-14 rounded-full gradient-accent flex items-center justify-center text-accent-foreground font-bold text-lg shadow-glow-accent group-hover:scale-110 transition-transform">
                       {index + 1}
                     </div>
                   </div>
                   <div className="flex-grow">
                     <div className="flex items-center mb-2">
-                      <step.icon className="text-accent mr-2" size={20} />
-                      <h4 className="text-lg font-semibold">{step.title}</h4>
+                      <step.icon className="text-accent mr-2 group-hover:scale-110 transition-transform" size={22} />
+                      <h4 className="text-lg font-semibold group-hover:text-accent transition-colors">{step.title}</h4>
                     </div>
                     <p className="text-muted-foreground">{step.description}</p>
                   </div>

@@ -43,8 +43,10 @@ const ContactCTA = () => {
 
           <div className="grid lg:grid-cols-2 gap-8">
             {/* Contact Form */}
-            <Card className="p-8">
-              <h3 className="text-2xl font-bold mb-6">Send Us a Message</h3>
+            <Card className="p-8 hover-lift border-primary/20 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
+              <div className="relative z-10">
+                <h3 className="text-2xl font-bold mb-6">Send Us a Message</h3>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <Label htmlFor="name">Full Name</Label>
@@ -103,27 +105,30 @@ const ContactCTA = () => {
                   />
                 </div>
 
-                <Button type="submit" variant="hero" size="lg" className="w-full">
+                <Button type="submit" variant="hero" size="lg" className="w-full group">
                   Send Message
-                  <Send className="ml-2" size={18} />
+                  <Send className="ml-2 group-hover:translate-x-1 transition-transform" size={18} />
                 </Button>
               </form>
+              </div>
             </Card>
 
             {/* Contact Info & CTA */}
             <div className="space-y-6">
-              <Card className="p-8 bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
-                <h3 className="text-2xl font-bold mb-4">
-                  Let's Transform Your Advertising
-                </h3>
+              <Card className="p-8 bg-gradient-to-br from-primary/10 to-accent/10 border-primary/30 hover-lift hover-glow relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 animate-pulse-glow" />
+                <div className="relative z-10">
+                  <h3 className="text-2xl font-bold mb-4">
+                    Let's Transform Your Advertising
+                  </h3>
                 <p className="text-muted-foreground mb-6">
                   Whether you're looking to advertise or monetize your venue,
                   we're here to help you succeed.
                 </p>
 
                 <div className="space-y-4">
-                  <div className="flex items-start space-x-3">
-                    <Mail className="text-primary mt-1 flex-shrink-0" size={20} />
+                  <div className="flex items-start space-x-3 group">
+                    <Mail className="text-primary mt-1 flex-shrink-0 group-hover:scale-110 transition-transform" size={20} />
                     <div>
                       <p className="font-semibold">Email</p>
                       <a
@@ -135,8 +140,8 @@ const ContactCTA = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-start space-x-3">
-                    <Phone className="text-primary mt-1 flex-shrink-0" size={20} />
+                  <div className="flex items-start space-x-3 group">
+                    <Phone className="text-primary mt-1 flex-shrink-0 group-hover:scale-110 transition-transform" size={20} />
                     <div>
                       <p className="font-semibold">Phone</p>
                       <a
@@ -148,8 +153,8 @@ const ContactCTA = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-start space-x-3">
-                    <MapPin className="text-primary mt-1 flex-shrink-0" size={20} />
+                  <div className="flex items-start space-x-3 group">
+                    <MapPin className="text-primary mt-1 flex-shrink-0 group-hover:scale-110 transition-transform" size={20} />
                     <div>
                       <p className="font-semibold">Address</p>
                       <p className="text-muted-foreground">
@@ -160,9 +165,12 @@ const ContactCTA = () => {
                     </div>
                   </div>
                 </div>
+                </div>
               </Card>
 
-              <Card className="p-8 gradient-hero text-primary-foreground">
+              <Card className="p-8 gradient-hero text-primary-foreground hover-lift shadow-glow relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary-foreground/10 to-transparent pointer-events-none" />
+                <div className="relative z-10">
                 <h4 className="text-xl font-bold mb-2">Quick Stats</h4>
                 <div className="grid grid-cols-2 gap-4 mt-4">
                   <div>
@@ -181,6 +189,7 @@ const ContactCTA = () => {
                     <p className="text-3xl font-bold">24/7</p>
                     <p className="text-sm opacity-90">Support</p>
                   </div>
+                </div>
                 </div>
               </Card>
             </div>

@@ -14,12 +14,12 @@ const Navigation = () => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border shadow-sm">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b border-border/50 shadow-sm">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <div className="flex-shrink-0">
-            <h1 className="text-2xl font-bold gradient-primary bg-clip-text text-transparent">
+          <div className="flex-shrink-0 group cursor-pointer">
+            <h1 className="text-2xl font-bold gradient-primary bg-clip-text text-transparent group-hover:scale-105 transition-transform">
               AdVenue
             </h1>
           </div>
@@ -28,21 +28,24 @@ const Navigation = () => {
           <div className="hidden md:flex items-center space-x-8">
             <button
               onClick={() => scrollToSection("features")}
-              className="text-foreground hover:text-primary transition-smooth font-medium"
+              className="text-foreground hover:text-primary transition-smooth font-medium relative group"
             >
               Features
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full" />
             </button>
             <button
               onClick={() => scrollToSection("how-it-works")}
-              className="text-foreground hover:text-primary transition-smooth font-medium"
+              className="text-foreground hover:text-primary transition-smooth font-medium relative group"
             >
               How It Works
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full" />
             </button>
             <button
               onClick={() => scrollToSection("contact")}
-              className="text-foreground hover:text-primary transition-smooth font-medium"
+              className="text-foreground hover:text-primary transition-smooth font-medium relative group"
             >
               Contact
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full" />
             </button>
           </div>
 

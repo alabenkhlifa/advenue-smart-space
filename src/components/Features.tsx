@@ -96,14 +96,17 @@ const Features = () => {
             {advertiserFeatures.map((feature, index) => (
               <Card
                 key={index}
-                className="p-6 hover:shadow-lg transition-smooth hover:scale-105 bg-card border-border animate-fade-in"
+                className="p-6 hover-lift hover-glow bg-card border-primary/20 animate-fade-in group relative overflow-hidden"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
-                <div className="gradient-primary w-12 h-12 rounded-lg flex items-center justify-center mb-4">
-                  <feature.icon className="text-primary-foreground" size={24} />
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="relative z-10">
+                  <div className="gradient-primary w-14 h-14 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg">
+                    <feature.icon className="text-primary-foreground" size={26} />
+                  </div>
+                  <h4 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">{feature.title}</h4>
+                  <p className="text-muted-foreground">{feature.description}</p>
                 </div>
-                <h4 className="text-xl font-semibold mb-2">{feature.title}</h4>
-                <p className="text-muted-foreground">{feature.description}</p>
               </Card>
             ))}
           </div>
@@ -124,14 +127,17 @@ const Features = () => {
             {venueFeatures.map((feature, index) => (
               <Card
                 key={index}
-                className="p-6 hover:shadow-lg transition-smooth hover:scale-105 bg-card border-border animate-fade-in"
+                className="p-6 hover-lift shadow-glow-accent bg-card border-accent/20 animate-fade-in group relative overflow-hidden"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
-                <div className="gradient-accent w-12 h-12 rounded-lg flex items-center justify-center mb-4">
-                  <feature.icon className="text-accent-foreground" size={24} />
+                <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="relative z-10">
+                  <div className="gradient-accent w-14 h-14 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg">
+                    <feature.icon className="text-accent-foreground" size={26} />
+                  </div>
+                  <h4 className="text-xl font-semibold mb-2 group-hover:text-accent transition-colors">{feature.title}</h4>
+                  <p className="text-muted-foreground">{feature.description}</p>
                 </div>
-                <h4 className="text-xl font-semibold mb-2">{feature.title}</h4>
-                <p className="text-muted-foreground">{feature.description}</p>
               </Card>
             ))}
           </div>
