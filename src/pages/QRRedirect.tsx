@@ -48,7 +48,7 @@ const QRRedirect = () => {
         const venue = pairedScreen?.venueId ? getVenueById(pairedScreen.venueId) : null;
 
         // Record the scan event with region data
-        trackQRCodeScan(screenId, campaignId, {
+        trackQRCodeScan(screenId, campaignId, mediaId, {
           venueId: pairedScreen?.venueId,
           ownerId: pairedScreen?.ownerId,
           region: venue?.region,
@@ -85,7 +85,7 @@ const QRRedirect = () => {
       <div className="min-h-screen w-full bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-8">
         <Card className="p-12 text-center max-w-md bg-card/95 backdrop-blur-md border-primary/20">
           <QrCode className="mx-auto mb-6 text-primary animate-pulse" size={80} />
-          <h1 className="text-3xl font-bold mb-4 gradient-primary bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold mb-4 text-primary">
             Processing QR Code
           </h1>
           <p className="text-lg text-muted-foreground">
@@ -102,7 +102,7 @@ const QRRedirect = () => {
       <div className="min-h-screen w-full bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-8">
         <Card className="p-12 text-center max-w-md bg-card/95 backdrop-blur-md border-primary/20">
           <ExternalLink className="mx-auto mb-6 text-primary animate-bounce" size={80} />
-          <h1 className="text-3xl font-bold mb-4 gradient-primary bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold mb-4 text-primary">
             Redirecting...
           </h1>
           <p className="text-lg text-muted-foreground">

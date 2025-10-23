@@ -20,6 +20,7 @@ export interface QRCodeScanEvent {
   id: string;
   screenId: string;
   campaignId: string;
+  mediaId: string;
   timestamp: number;
   venueId?: string;
   ownerId?: string;
@@ -37,7 +38,7 @@ export interface CampaignAnalytics {
   ownerBreakdown: Record<string, { impressions: number; duration: number; qrScans: number; screenCount: number }>;
   regionBreakdown: Record<string, { impressions: number; duration: number; qrScans: number }>;
   cityBreakdown: Record<string, { impressions: number; duration: number; qrScans: number }>;
-  mediaBreakdown: Record<string, { impressions: number; duration: number }>;
+  mediaBreakdown: Record<string, { impressions: number; duration: number; qrScans: number }>;
   dailyBreakdown: Record<string, { impressions: number; duration: number; qrScans: number }>;
 }
 
@@ -123,6 +124,7 @@ export const startImpression = (
 export const trackQRCodeScan = (
   screenId: string,
   campaignId: string,
+  mediaId: string,
   metadata?: {
     venueId?: string;
     ownerId?: string;
@@ -137,6 +139,7 @@ export const trackQRCodeScan = (
     id: scanId,
     screenId,
     campaignId,
+    mediaId,
     timestamp: Date.now(),
     venueId: metadata?.venueId,
     ownerId: metadata?.ownerId,
@@ -248,7 +251,7 @@ export const getCampaignAnalytics = (
 
     // Media breakdown
     if (!analytics.mediaBreakdown[imp.mediaId]) {
-      analytics.mediaBreakdown[imp.mediaId] = { impressions: 0, duration: 0 };
+      analytics.mediaBreakdown[imp.mediaId] = { impressions: 0, duration: 0, qrScans: 0 };
     }
     analytics.mediaBreakdown[imp.mediaId].impressions++;
     analytics.mediaBreakdown[imp.mediaId].duration += imp.duration;
@@ -294,6 +297,12 @@ export const getCampaignAnalytics = (
       }
       analytics.cityBreakdown[scan.city].qrScans++;
     }
+
+    // Media breakdown
+    if (!analytics.mediaBreakdown[scan.mediaId]) {
+      analytics.mediaBreakdown[scan.mediaId] = { impressions: 0, duration: 0, qrScans: 0 };
+    }
+    analytics.mediaBreakdown[scan.mediaId].qrScans++;
 
     // Daily breakdown
     const date = new Date(scan.timestamp);
