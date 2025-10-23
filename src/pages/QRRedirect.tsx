@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { recordQRScan } from '@/lib/qrAnalytics';
+import { trackQRCodeScan } from '@/lib/analytics';
 import { getCampaignById } from '@/lib/campaigns';
+import { getPairedScreen } from '@/lib/pairing';
+import { getVenueById } from '@/lib/auth';
 import { Card } from '@/components/ui/card';
 import { QrCode, ExternalLink, AlertCircle } from 'lucide-react';
 
@@ -41,8 +43,18 @@ const QRRedirect = () => {
           return;
         }
 
-        // Record the scan event
-        recordQRScan(screenId, campaignId, mediaId, campaign.targetUrl);
+        // Get venue metadata for analytics
+        const pairedScreen = getPairedScreen(screenId);
+        const venue = pairedScreen?.venueId ? getVenueById(pairedScreen.venueId) : null;
+
+        // Record the scan event with region data
+        trackQRCodeScan(screenId, campaignId, {
+          venueId: pairedScreen?.venueId,
+          ownerId: pairedScreen?.ownerId,
+          region: venue?.region,
+          city: venue?.city,
+          country: venue?.country,
+        });
 
         // Update status
         setStatus('redirecting');

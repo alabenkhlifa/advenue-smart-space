@@ -24,6 +24,8 @@ const ScreenOwnerRegister = () => {
       type: "",
       address: "",
       city: "",
+      region: "",
+      country: "",
       screenCount: 0,
       footTraffic: "",
     },
@@ -53,6 +55,8 @@ const ScreenOwnerRegister = () => {
         type: "",
         address: "",
         city: "",
+        region: "",
+        country: "",
         screenCount: 0,
         footTraffic: "",
       },
@@ -310,6 +314,24 @@ const ScreenOwnerRegister = () => {
                           placeholder="New York"
                           value={venue.city}
                           onChange={(e) => handleVenueChange(index, "city", e.target.value)}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>District/Neighborhood</Label>
+                        <Input
+                          placeholder="LAC2, Ennasr, Menzah, etc."
+                          value={venue.region}
+                          onChange={(e) => handleVenueChange(index, "region", e.target.value)}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Country</Label>
+                        <Input
+                          placeholder="USA"
+                          value={venue.country}
+                          onChange={(e) => handleVenueChange(index, "country", e.target.value)}
                         />
                       </div>
 

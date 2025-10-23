@@ -13,7 +13,7 @@ import {
 } from "@/lib/campaigns";
 import { getMediaFile, blobToDataUrl } from "@/lib/mediaStorage";
 import { getCampaignAnalytics, formatDuration } from "@/lib/analytics";
-import { getCampaignQRAnalytics, calculateScanConversionRate } from "@/lib/qrAnalytics";
+import { getCampaignQRAnalytics } from "@/lib/qrAnalytics";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -418,7 +418,6 @@ const AdvertiserDashboard = () => {
             {campaigns.map((campaign) => {
               const analytics = getCampaignAnalytics(campaign.id);
               const qrAnalytics = getCampaignQRAnalytics(campaign.id);
-              const conversionRate = calculateScanConversionRate(campaign.id, analytics.totalImpressions);
 
               return (
                 <Card key={campaign.id}>
@@ -470,17 +469,11 @@ const AdvertiserDashboard = () => {
                           <QrCode className="text-primary" size={20} />
                           <h3 className="text-lg font-semibold">QR Code Scans</h3>
                         </div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                           <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
                             <p className="text-sm text-muted-foreground mb-1">Total Scans</p>
                             <p className="text-3xl font-bold text-primary">
                               {qrAnalytics.totalScans}
-                            </p>
-                          </div>
-                          <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
-                            <p className="text-sm text-muted-foreground mb-1">Conversion Rate</p>
-                            <p className="text-2xl font-bold text-primary">
-                              {conversionRate.toFixed(2)}%
                             </p>
                           </div>
                           <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
@@ -500,6 +493,63 @@ const AdvertiserDashboard = () => {
                                 : 0}
                             </p>
                           </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* District Analytics */}
+                    {Object.keys(analytics.regionBreakdown).length > 0 && (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-3">Performance by District</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {Object.entries(analytics.regionBreakdown)
+                            .sort(([, a], [, b]) => b.impressions - a.impressions)
+                            .map(([district, data]) => (
+                              <div key={district} className="bg-muted/30 rounded-lg p-4 border">
+                                <h4 className="font-semibold text-foreground mb-2">{district}</h4>
+                                <div className="grid grid-cols-3 gap-2 text-sm">
+                                  <div>
+                                    <p className="text-muted-foreground">Impressions</p>
+                                    <p className="font-bold text-primary">{data.impressions}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-muted-foreground">QR Scans</p>
+                                    <p className="font-bold text-accent">{data.qrScans}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-muted-foreground">Duration</p>
+                                    <p className="font-bold text-foreground">{formatDuration(data.duration)}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* City Analytics */}
+                    {Object.keys(analytics.cityBreakdown).length > 0 && (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-3">Performance by City</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {Object.entries(analytics.cityBreakdown)
+                            .sort(([, a], [, b]) => b.impressions - a.impressions)
+                            .slice(0, 6)
+                            .map(([city, data]) => (
+                              <div key={city} className="bg-muted/30 rounded-lg p-4 border">
+                                <h4 className="font-semibold text-foreground mb-2">{city}</h4>
+                                <div className="space-y-1 text-sm">
+                                  <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Impressions:</span>
+                                    <span className="font-bold text-primary">{data.impressions}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-muted-foreground">QR Scans:</span>
+                                    <span className="font-bold text-accent">{data.qrScans}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
                         </div>
                       </div>
                     )}

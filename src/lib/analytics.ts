@@ -8,19 +8,41 @@ export interface ImpressionEvent {
   endTime: number;
   duration: number; // in milliseconds
   venueName?: string;
+  venueId?: string;
+  ownerId?: string;
+  region?: string;
+  city?: string;
+  country?: string;
   timestamp: number;
+}
+
+export interface QRCodeScanEvent {
+  id: string;
+  screenId: string;
+  campaignId: string;
+  timestamp: number;
+  venueId?: string;
+  ownerId?: string;
+  region?: string;
+  city?: string;
+  country?: string;
 }
 
 export interface CampaignAnalytics {
   campaignId: string;
   totalImpressions: number;
   totalDuration: number; // in milliseconds
-  screenBreakdown: Record<string, { impressions: number; duration: number }>;
+  totalQRScans: number;
+  screenBreakdown: Record<string, { impressions: number; duration: number; qrScans: number }>;
+  ownerBreakdown: Record<string, { impressions: number; duration: number; qrScans: number; screenCount: number }>;
+  regionBreakdown: Record<string, { impressions: number; duration: number; qrScans: number }>;
+  cityBreakdown: Record<string, { impressions: number; duration: number; qrScans: number }>;
   mediaBreakdown: Record<string, { impressions: number; duration: number }>;
-  dailyBreakdown: Record<string, { impressions: number; duration: number }>;
+  dailyBreakdown: Record<string, { impressions: number; duration: number; qrScans: number }>;
 }
 
 const IMPRESSIONS_KEY = 'advenue_impressions';
+const QR_SCANS_KEY = 'advenue_qr_scans';
 
 // Get all impression events
 const getImpressions = (): ImpressionEvent[] => {
@@ -39,13 +61,37 @@ const saveImpressions = (impressions: ImpressionEvent[]): void => {
   localStorage.setItem(IMPRESSIONS_KEY, JSON.stringify(impressions));
 };
 
+// Get all QR code scan events
+const getQRScans = (): QRCodeScanEvent[] => {
+  const data = localStorage.getItem(QR_SCANS_KEY);
+  if (!data) return [];
+
+  try {
+    return JSON.parse(data);
+  } catch {
+    return [];
+  }
+};
+
+// Save QR scans
+const saveQRScans = (scans: QRCodeScanEvent[]): void => {
+  localStorage.setItem(QR_SCANS_KEY, JSON.stringify(scans));
+};
+
 // Start tracking an impression
 export const startImpression = (
   screenId: string,
   campaignId: string,
   mediaId: string,
   mediaType: 'image' | 'video',
-  venueName?: string
+  metadata?: {
+    venueName?: string;
+    venueId?: string;
+    ownerId?: string;
+    region?: string;
+    city?: string;
+    country?: string;
+  }
 ): string => {
   const impressionId = `imp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
@@ -58,7 +104,12 @@ export const startImpression = (
     startTime: Date.now(),
     endTime: 0,
     duration: 0,
-    venueName,
+    venueName: metadata?.venueName,
+    venueId: metadata?.venueId,
+    ownerId: metadata?.ownerId,
+    region: metadata?.region,
+    city: metadata?.city,
+    country: metadata?.country,
     timestamp: Date.now(),
   };
 
@@ -66,6 +117,37 @@ export const startImpression = (
   sessionStorage.setItem(`impression_${impressionId}`, JSON.stringify(impression));
 
   return impressionId;
+};
+
+// Track QR code scan
+export const trackQRCodeScan = (
+  screenId: string,
+  campaignId: string,
+  metadata?: {
+    venueId?: string;
+    ownerId?: string;
+    region?: string;
+    city?: string;
+    country?: string;
+  }
+): void => {
+  const scanId = `qr-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
+  const scan: QRCodeScanEvent = {
+    id: scanId,
+    screenId,
+    campaignId,
+    timestamp: Date.now(),
+    venueId: metadata?.venueId,
+    ownerId: metadata?.ownerId,
+    region: metadata?.region,
+    city: metadata?.city,
+    country: metadata?.country,
+  };
+
+  const scans = getQRScans();
+  scans.push(scan);
+  saveQRScans(scans);
 };
 
 // End tracking an impression
@@ -103,31 +185,66 @@ export const getCampaignAnalytics = (
   endDate?: Date
 ): CampaignAnalytics => {
   let impressions = getCampaignImpressions(campaignId);
+  let qrScans = getQRScans().filter(scan => scan.campaignId === campaignId);
 
   // Filter by date range if provided
   if (startDate) {
     impressions = impressions.filter(imp => imp.timestamp >= startDate.getTime());
+    qrScans = qrScans.filter(scan => scan.timestamp >= startDate.getTime());
   }
   if (endDate) {
     impressions = impressions.filter(imp => imp.timestamp <= endDate.getTime());
+    qrScans = qrScans.filter(scan => scan.timestamp <= endDate.getTime());
   }
 
   const analytics: CampaignAnalytics = {
     campaignId,
     totalImpressions: impressions.length,
     totalDuration: impressions.reduce((sum, imp) => sum + imp.duration, 0),
+    totalQRScans: qrScans.length,
     screenBreakdown: {},
+    ownerBreakdown: {},
+    regionBreakdown: {},
+    cityBreakdown: {},
     mediaBreakdown: {},
     dailyBreakdown: {},
   };
 
+  // Process impressions
   impressions.forEach(imp => {
     // Screen breakdown
     if (!analytics.screenBreakdown[imp.screenId]) {
-      analytics.screenBreakdown[imp.screenId] = { impressions: 0, duration: 0 };
+      analytics.screenBreakdown[imp.screenId] = { impressions: 0, duration: 0, qrScans: 0 };
     }
     analytics.screenBreakdown[imp.screenId].impressions++;
     analytics.screenBreakdown[imp.screenId].duration += imp.duration;
+
+    // Owner breakdown
+    if (imp.ownerId) {
+      if (!analytics.ownerBreakdown[imp.ownerId]) {
+        analytics.ownerBreakdown[imp.ownerId] = { impressions: 0, duration: 0, qrScans: 0, screenCount: 0 };
+      }
+      analytics.ownerBreakdown[imp.ownerId].impressions++;
+      analytics.ownerBreakdown[imp.ownerId].duration += imp.duration;
+    }
+
+    // Region breakdown
+    if (imp.region) {
+      if (!analytics.regionBreakdown[imp.region]) {
+        analytics.regionBreakdown[imp.region] = { impressions: 0, duration: 0, qrScans: 0 };
+      }
+      analytics.regionBreakdown[imp.region].impressions++;
+      analytics.regionBreakdown[imp.region].duration += imp.duration;
+    }
+
+    // City breakdown
+    if (imp.city) {
+      if (!analytics.cityBreakdown[imp.city]) {
+        analytics.cityBreakdown[imp.city] = { impressions: 0, duration: 0, qrScans: 0 };
+      }
+      analytics.cityBreakdown[imp.city].impressions++;
+      analytics.cityBreakdown[imp.city].duration += imp.duration;
+    }
 
     // Media breakdown
     if (!analytics.mediaBreakdown[imp.mediaId]) {
@@ -140,10 +257,67 @@ export const getCampaignAnalytics = (
     const date = new Date(imp.timestamp);
     const dateKey = date.toISOString().split('T')[0];
     if (!analytics.dailyBreakdown[dateKey]) {
-      analytics.dailyBreakdown[dateKey] = { impressions: 0, duration: 0 };
+      analytics.dailyBreakdown[dateKey] = { impressions: 0, duration: 0, qrScans: 0 };
     }
     analytics.dailyBreakdown[dateKey].impressions++;
     analytics.dailyBreakdown[dateKey].duration += imp.duration;
+  });
+
+  // Process QR scans
+  qrScans.forEach(scan => {
+    // Screen breakdown
+    if (!analytics.screenBreakdown[scan.screenId]) {
+      analytics.screenBreakdown[scan.screenId] = { impressions: 0, duration: 0, qrScans: 0 };
+    }
+    analytics.screenBreakdown[scan.screenId].qrScans++;
+
+    // Owner breakdown
+    if (scan.ownerId) {
+      if (!analytics.ownerBreakdown[scan.ownerId]) {
+        analytics.ownerBreakdown[scan.ownerId] = { impressions: 0, duration: 0, qrScans: 0, screenCount: 0 };
+      }
+      analytics.ownerBreakdown[scan.ownerId].qrScans++;
+    }
+
+    // Region breakdown
+    if (scan.region) {
+      if (!analytics.regionBreakdown[scan.region]) {
+        analytics.regionBreakdown[scan.region] = { impressions: 0, duration: 0, qrScans: 0 };
+      }
+      analytics.regionBreakdown[scan.region].qrScans++;
+    }
+
+    // City breakdown
+    if (scan.city) {
+      if (!analytics.cityBreakdown[scan.city]) {
+        analytics.cityBreakdown[scan.city] = { impressions: 0, duration: 0, qrScans: 0 };
+      }
+      analytics.cityBreakdown[scan.city].qrScans++;
+    }
+
+    // Daily breakdown
+    const date = new Date(scan.timestamp);
+    const dateKey = date.toISOString().split('T')[0];
+    if (!analytics.dailyBreakdown[dateKey]) {
+      analytics.dailyBreakdown[dateKey] = { impressions: 0, duration: 0, qrScans: 0 };
+    }
+    analytics.dailyBreakdown[dateKey].qrScans++;
+  });
+
+  // Calculate unique screen count per owner
+  const screensByOwner: Record<string, Set<string>> = {};
+  impressions.forEach(imp => {
+    if (imp.ownerId) {
+      if (!screensByOwner[imp.ownerId]) {
+        screensByOwner[imp.ownerId] = new Set();
+      }
+      screensByOwner[imp.ownerId].add(imp.screenId);
+    }
+  });
+  Object.keys(screensByOwner).forEach(ownerId => {
+    if (analytics.ownerBreakdown[ownerId]) {
+      analytics.ownerBreakdown[ownerId].screenCount = screensByOwner[ownerId].size;
+    }
   });
 
   return analytics;
@@ -206,6 +380,30 @@ export const calculateScreenRevenue = (
   return impressions.length * ratePerImpression;
 };
 
+// Get QR scans for a specific campaign
+export const getCampaignQRScans = (campaignId: string): QRCodeScanEvent[] => {
+  const scans = getQRScans();
+  return scans.filter(scan => scan.campaignId === campaignId);
+};
+
+// Get QR scans for a specific screen
+export const getScreenQRScans = (
+  screenId: string,
+  startDate?: Date,
+  endDate?: Date
+): QRCodeScanEvent[] => {
+  let scans = getQRScans().filter(scan => scan.screenId === screenId);
+
+  if (startDate) {
+    scans = scans.filter(scan => scan.timestamp >= startDate.getTime());
+  }
+  if (endDate) {
+    scans = scans.filter(scan => scan.timestamp <= endDate.getTime());
+  }
+
+  return scans;
+};
+
 // Clean up old impressions (older than 90 days)
 export const cleanupOldImpressions = (): void => {
   const impressions = getImpressions();
@@ -215,5 +413,13 @@ export const cleanupOldImpressions = (): void => {
 
   if (filtered.length !== impressions.length) {
     saveImpressions(filtered);
+  }
+
+  // Also clean up old QR scans
+  const scans = getQRScans();
+  const filteredScans = scans.filter(scan => scan.timestamp > ninetyDaysAgo);
+
+  if (filteredScans.length !== scans.length) {
+    saveQRScans(filteredScans);
   }
 };

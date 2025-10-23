@@ -202,6 +202,12 @@ export const getOwnerScreens = (ownerId: string): PairedScreen[] => {
   return Object.values(pairedScreens).filter(screen => screen.ownerId === ownerId);
 };
 
+// Get a single paired screen by screenId
+export const getPairedScreen = (screenId: string): PairedScreen | null => {
+  const pairedScreens = getPairedScreens();
+  return pairedScreens[screenId] || null;
+};
+
 // Validate session token
 export const validateSessionToken = (
   screenId: string,

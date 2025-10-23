@@ -5,10 +5,12 @@ import {
   createPairingRequest,
   validateSessionToken,
   hashPairingCode,
+  getPairedScreen,
 } from "@/lib/pairing";
 import { getScreenMedia, getScreenCampaignSettings, getCampaignById } from "@/lib/campaigns";
-import { startImpression, endImpression } from "@/lib/analytics";
+import { startImpression, endImpression, trackQRCodeScan } from "@/lib/analytics";
 import { getMediaFile, blobToDataUrl } from "@/lib/mediaStorage";
+import { getVenueById } from "@/lib/auth";
 import { Card } from "@/components/ui/card";
 import { Tv, Shield, Clock } from "lucide-react";
 import QRCodeOverlay from "@/components/QRCodeOverlay";
@@ -166,12 +168,23 @@ const ScreenDisplay = () => {
 
     // Start tracking impression for current media
     if (currentMedia) {
+      // Get venue metadata for analytics
+      const pairedScreen = getPairedScreen(screenId);
+      const venue = pairedScreen?.venueId ? getVenueById(pairedScreen.venueId) : null;
+
       const impressionId = startImpression(
         screenId,
         currentMedia.campaignId || "unknown",
         currentMedia.id,
         currentMedia.type,
-        localStorage.getItem("venue_name") || undefined
+        {
+          venueName: venue?.name || pairedScreen?.venueName || localStorage.getItem("venue_name") || undefined,
+          venueId: pairedScreen?.venueId,
+          ownerId: pairedScreen?.ownerId,
+          region: venue?.region,
+          city: venue?.city,
+          country: venue?.country,
+        }
       );
       setCurrentImpressionId(impressionId);
     }

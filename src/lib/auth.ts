@@ -6,7 +6,7 @@ export interface Venue {
   type?: string;
   address?: string;
   city?: string;
-  region?: string; // Geographic region for analytics
+  region?: string; // District/Neighborhood (e.g., LAC2, Ennasr, Menzah)
   country?: string;
   screenCount?: number;
   footTraffic?: string;
@@ -44,8 +44,8 @@ const DUMMY_USERS = {
       role: 'screen-owner' as UserRole,
       name: 'Jane Owner',
       venues: [
-        { id: 'venue-1', name: 'Demo Cafe', type: 'cafe' },
-        { id: 'venue-2', name: 'Downtown Restaurant', type: 'restaurant' },
+        { id: 'venue-1', name: 'Demo Cafe', type: 'cafe', city: 'Tunis', region: 'LAC2', country: 'Tunisia' },
+        { id: 'venue-2', name: 'Downtown Restaurant', type: 'restaurant', city: 'Tunis', region: 'Ennasr', country: 'Tunisia' },
       ],
     },
   },
@@ -131,4 +131,26 @@ export const requireAuth = (role?: UserRole): User | null => {
   }
 
   return user;
+};
+
+// Get venue by ID from all users
+export const getVenueById = (venueId: string): Venue | null => {
+  // In a real app, this would query the database
+  // For now, search through current user and dummy users
+  const currentUser = getCurrentUser();
+
+  if (currentUser && currentUser.venues) {
+    const venue = currentUser.venues.find(v => v.id === venueId);
+    if (venue) return venue;
+  }
+
+  // Check dummy users
+  for (const userData of Object.values(DUMMY_USERS)) {
+    if (userData.user.venues) {
+      const venue = userData.user.venues.find(v => v.id === venueId);
+      if (venue) return venue;
+    }
+  }
+
+  return null;
 };
