@@ -63,11 +63,10 @@ export function YouTubePlayer({
       playerVars.listType = 'playlist';
     }
 
-    // Create YouTube player
-    ytPlayerRef.current = new window.YT.Player(playerRef.current, {
+    // Create player configuration
+    const playerConfig: any = {
       height: '100%',
       width: '100%',
-      videoId: videoId,
       playerVars: playerVars,
       events: {
         onReady: (event: any) => {
@@ -93,7 +92,15 @@ export function YouTubePlayer({
           }
         },
       },
-    });
+    };
+
+    // Only add videoId if it's provided (for playlists, it's optional)
+    if (videoId) {
+      playerConfig.videoId = videoId;
+    }
+
+    // Create YouTube player
+    ytPlayerRef.current = new window.YT.Player(playerRef.current, playerConfig);
 
     return () => {
       if (ytPlayerRef.current) {
