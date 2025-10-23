@@ -9,6 +9,8 @@ import AdvertiserRegister from "./pages/AdvertiserRegister";
 import ScreenOwnerRegister from "./pages/ScreenOwnerRegister";
 import ScreenDisplay from "./pages/ScreenDisplay";
 import AdvertiserDashboard from "./pages/AdvertiserDashboard";
+import CreateCampaignPage from "./pages/CreateCampaignPage";
+import EditCampaignPage from "./pages/EditCampaignPage";
 import ScreenOwnerDashboard from "./pages/ScreenOwnerDashboard";
 import QRRedirect from "./pages/QRRedirect";
 import NotFound from "./pages/NotFound";
@@ -28,6 +30,8 @@ const App = () => (
           <Route path="/register/screen-owner" element={<ScreenOwnerRegister />} />
           <Route path="/screen" element={<ScreenDisplay />} />
           <Route path="/dashboard/advertiser" element={<AdvertiserDashboard />} />
+          <Route path="/dashboard/advertiser/create-campaign" element={<CreateCampaignPage />} />
+          <Route path="/dashboard/advertiser/edit-campaign/:campaignId" element={<EditCampaignPage />} />
           <Route path="/dashboard/owner" element={<ScreenOwnerDashboard />} />
           <Route path="/scan" element={<QRRedirect />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

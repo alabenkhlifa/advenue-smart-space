@@ -2,14 +2,13 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { requireAuth, logout } from "@/lib/auth";
 import {
-  createCampaign,
   getAdvertiserCampaigns,
   updateCampaign,
   addMediaToCampaignWithBlob,
   removeMediaFromCampaign,
   validateMediaFile,
+  formatWeeklySchedule,
   Campaign,
-  CampaignCategory,
 } from "@/lib/campaigns";
 import { getMediaFile, blobToDataUrl } from "@/lib/mediaStorage";
 import { getCampaignAnalytics, formatDuration } from "@/lib/analytics";
@@ -17,22 +16,19 @@ import { getCampaignQRAnalytics } from "@/lib/qrAnalytics";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Plus, Upload, Play, Pause, BarChart3, Image as ImageIcon, Video, X, QrCode } from "lucide-react";
+import { LogOut, Plus, Upload, Play, Pause, BarChart3, X, QrCode, Calendar as CalendarIcon, Pencil } from "lucide-react";
 import MediaThumbnail from "@/components/MediaThumbnail";
+import { format } from "date-fns";
 
 const AdvertiserDashboard = () => {
   const [user, setUser] = useState<any>(null);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [uploadingMedia, setUploadingMedia] = useState(false);
+
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -56,25 +52,12 @@ const AdvertiserDashboard = () => {
     navigate("/");
   };
 
-  const handleCreateCampaign = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+  const handleCreateCampaign = () => {
+    navigate("/dashboard/advertiser/create-campaign");
+  };
 
-    const campaign = createCampaign(
-      user.id,
-      formData.get("name") as string,
-      formData.get("description") as string,
-      parseFloat(formData.get("budget") as string) || undefined,
-      (formData.get("targetUrl") as string) || undefined,
-      (formData.get("category") as CampaignCategory) || undefined
-    );
-
-    setCampaigns([...campaigns, campaign]);
-    setIsCreateDialogOpen(false);
-    toast({
-      title: "Campaign Created",
-      description: `${campaign.name} has been created successfully.`,
-    });
+  const handleEditCampaign = (campaignId: string) => {
+    navigate(`/dashboard/advertiser/edit-campaign/${campaignId}`);
   };
 
   const handleMediaUpload = async (campaignId: string, files: FileList | null) => {
@@ -173,7 +156,7 @@ const AdvertiserDashboard = () => {
       <header className="border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold gradient-primary bg-clip-text text-transparent">
+            <h1 className="text-2xl font-bold text-primary">
               AdVenue
             </h1>
             <p className="text-sm text-muted-foreground">Advertiser Dashboard</p>
@@ -200,79 +183,10 @@ const AdvertiserDashboard = () => {
           <TabsContent value="campaigns" className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-3xl font-bold">My Campaigns</h2>
-              <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="hero">
-                    <Plus className="mr-2" size={18} />
-                    New Campaign
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Create New Campaign</DialogTitle>
-                    <DialogDescription>
-                      Create a new advertising campaign to reach your target audience.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <form onSubmit={handleCreateCampaign} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Campaign Name *</Label>
-                      <Input id="name" name="name" placeholder="Summer Sale 2025" required />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="description">Description</Label>
-                      <Textarea
-                        id="description"
-                        name="description"
-                        placeholder="Promote our summer sale..."
-                        rows={3}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="category">Category</Label>
-                      <Select name="category">
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Food">Food</SelectItem>
-                          <SelectItem value="Clothing">Clothing</SelectItem>
-                          <SelectItem value="Hotel">Hotel</SelectItem>
-                          <SelectItem value="Entertainment">Entertainment</SelectItem>
-                          <SelectItem value="Technology">Technology</SelectItem>
-                          <SelectItem value="Health">Health</SelectItem>
-                          <SelectItem value="Other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="targetUrl">Target URL (for QR codes)</Label>
-                      <Input
-                        id="targetUrl"
-                        name="targetUrl"
-                        type="url"
-                        placeholder="https://example.com/landing-page"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Users who scan the QR code will be redirected to this URL
-                      </p>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="budget">Budget ($)</Label>
-                      <Input
-                        id="budget"
-                        name="budget"
-                        type="number"
-                        placeholder="1000"
-                        step="0.01"
-                      />
-                    </div>
-                    <Button type="submit" variant="hero" className="w-full">
-                      Create Campaign
-                    </Button>
-                  </form>
-                </DialogContent>
-              </Dialog>
+              <Button variant="hero" onClick={handleCreateCampaign}>
+                <Plus className="mr-2" size={18} />
+                New Campaign
+              </Button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -281,15 +195,26 @@ const AdvertiserDashboard = () => {
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <CardTitle className="text-xl">{campaign.name}</CardTitle>
-                      <Badge
-                        variant={
-                          campaign.status === "active" ? "success" :
-                          campaign.status === "paused" ? "warning" :
-                          "secondary"
-                        }
-                      >
-                        {campaign.status}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleEditCampaign(campaign.id)}
+                          title="Edit campaign"
+                        >
+                          <Pencil size={16} />
+                        </Button>
+                        <Badge
+                          variant={
+                            campaign.status === "active" ? "success" :
+                            campaign.status === "paused" ? "warning" :
+                            "secondary"
+                          }
+                        >
+                          {campaign.status}
+                        </Badge>
+                      </div>
                     </div>
                     <CardDescription className="line-clamp-2">
                       {campaign.description}
@@ -299,6 +224,29 @@ const AdvertiserDashboard = () => {
                         <Badge variant="outline" className="text-xs">
                           {campaign.category}
                         </Badge>
+                      </div>
+                    )}
+
+                    {/* Scheduling Summary */}
+                    {(campaign.startDate || campaign.endDate || campaign.weeklySchedule) && (
+                      <div className="mt-3 p-2 bg-primary/5 border border-primary/20 rounded-lg">
+                        <div className="flex items-start gap-2">
+                          <CalendarIcon size={14} className="text-primary mt-0.5 flex-shrink-0" />
+                          <div className="text-xs space-y-1">
+                            {(campaign.startDate || campaign.endDate) && (
+                              <div className="font-medium text-foreground">
+                                {campaign.startDate && format(new Date(campaign.startDate), "MMM d, yyyy")}
+                                {campaign.startDate && campaign.endDate && " - "}
+                                {campaign.endDate && format(new Date(campaign.endDate), "MMM d, yyyy")}
+                              </div>
+                            )}
+                            {campaign.weeklySchedule && (
+                              <div className="text-muted-foreground">
+                                {formatWeeklySchedule(campaign.weeklySchedule)}
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     )}
                   </CardHeader>
@@ -408,7 +356,7 @@ const AdvertiserDashboard = () => {
                 <p className="text-muted-foreground mb-4">
                   Create your first campaign to start advertising
                 </p>
-                <Button variant="hero" onClick={() => setIsCreateDialogOpen(true)}>
+                <Button variant="hero" onClick={handleCreateCampaign}>
                   <Plus className="mr-2" size={18} />
                   Create Campaign
                 </Button>

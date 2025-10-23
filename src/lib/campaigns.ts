@@ -12,6 +12,22 @@ export interface MediaFile {
 
 export type CampaignCategory = 'Food' | 'Clothing' | 'Hotel' | 'Entertainment' | 'Technology' | 'Health' | 'Other';
 
+export interface TimeSlot {
+  start: string; // "HH:mm" format (e.g., "09:00")
+  end: string;   // "HH:mm" format (e.g., "17:00")
+  id: string;    // Unique identifier for managing slots
+}
+
+export interface WeeklySchedule {
+  monday: TimeSlot[];
+  tuesday: TimeSlot[];
+  wednesday: TimeSlot[];
+  thursday: TimeSlot[];
+  friday: TimeSlot[];
+  saturday: TimeSlot[];
+  sunday: TimeSlot[];
+}
+
 export interface Campaign {
   id: string;
   advertiserId: string;
@@ -24,8 +40,9 @@ export interface Campaign {
   targetUrl?: string; // URL to redirect users when they scan the QR code
   createdAt: number;
   updatedAt: number;
-  startDate?: number;
-  endDate?: number;
+  startDate?: number; // Campaign date range start (timestamp)
+  endDate?: number;   // Campaign date range end (timestamp)
+  weeklySchedule?: WeeklySchedule; // Weekly time-of-day scheduling
 }
 
 export type ContentMode = 'ads-only' | 'custom-only' | 'mixed';
@@ -74,7 +91,10 @@ export const createCampaign = (
   description: string,
   budget?: number,
   targetUrl?: string,
-  category?: CampaignCategory
+  category?: CampaignCategory,
+  startDate?: number,
+  endDate?: number,
+  weeklySchedule?: WeeklySchedule
 ): Campaign => {
   const campaigns = getCampaigns();
 
@@ -90,6 +110,9 @@ export const createCampaign = (
     media: [],
     createdAt: Date.now(),
     updatedAt: Date.now(),
+    startDate,
+    endDate,
+    weeklySchedule,
   };
 
   campaigns.push(campaign);
@@ -144,10 +167,135 @@ export const getCampaignById = (campaignId: string): Campaign | null => {
   return campaigns.find(c => c.id === campaignId) || null;
 };
 
-// Get all active campaigns
+// Helper function to create an empty weekly schedule
+export const createEmptyWeeklySchedule = (): WeeklySchedule => ({
+  monday: [],
+  tuesday: [],
+  wednesday: [],
+  thursday: [],
+  friday: [],
+  saturday: [],
+  sunday: [],
+});
+
+// Helper function to check if current time is within a time slot
+const isTimeInSlot = (currentTime: string, slot: TimeSlot): boolean => {
+  // Convert HH:mm to minutes since midnight for comparison
+  const timeToMinutes = (time: string): number => {
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+
+  const current = timeToMinutes(currentTime);
+  const start = timeToMinutes(slot.start);
+  const end = timeToMinutes(slot.end);
+
+  return current >= start && current < end;
+};
+
+// Helper function to get current day name in lowercase
+const getCurrentDayName = (): keyof WeeklySchedule => {
+  const days: (keyof WeeklySchedule)[] = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  return days[new Date().getDay()];
+};
+
+// Helper function to get current time in HH:mm format
+const getCurrentTime = (): string => {
+  const now = new Date();
+  const hours = now.getHours().toString().padStart(2, '0');
+  const minutes = now.getMinutes().toString().padStart(2, '0');
+  return `${hours}:${minutes}`;
+};
+
+// Check if a campaign should be displayed right now based on scheduling
+export const isCampaignActiveNow = (campaign: Campaign): boolean => {
+  // First check if campaign status is active
+  if (campaign.status !== 'active') {
+    return false;
+  }
+
+  const now = Date.now();
+
+  // Check date range if specified
+  if (campaign.startDate && now < campaign.startDate) {
+    return false;
+  }
+  if (campaign.endDate && now > campaign.endDate) {
+    return false;
+  }
+
+  // Check weekly schedule if specified
+  if (campaign.weeklySchedule) {
+    const currentDay = getCurrentDayName();
+    const currentTime = getCurrentTime();
+    const todaySlots = campaign.weeklySchedule[currentDay];
+
+    // If there are no slots for today, campaign should not show
+    if (!todaySlots || todaySlots.length === 0) {
+      return false;
+    }
+
+    // Check if current time is within any of today's slots
+    const isInAnySlot = todaySlots.some(slot => isTimeInSlot(currentTime, slot));
+    if (!isInAnySlot) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
+// Get all active campaigns (filtered by scheduling)
 export const getActiveCampaigns = (): Campaign[] => {
   const campaigns = getCampaigns();
-  return campaigns.filter(c => c.status === 'active');
+  return campaigns.filter(c => isCampaignActiveNow(c));
+};
+
+// Helper function to format weekly schedule for display
+export const formatWeeklySchedule = (schedule: WeeklySchedule): string => {
+  const dayNames = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
+  const dayAbbr: Record<string, string> = {
+    monday: 'Mon',
+    tuesday: 'Tue',
+    wednesday: 'Wed',
+    thursday: 'Thu',
+    friday: 'Fri',
+    saturday: 'Sat',
+    sunday: 'Sun',
+  };
+
+  const scheduledDays = dayNames.filter(day => schedule[day].length > 0);
+
+  if (scheduledDays.length === 0) {
+    return '24/7';
+  }
+
+  // Group consecutive days with same time slots
+  const dayGroups: string[] = [];
+  let currentGroup: string[] = [];
+
+  for (const day of scheduledDays) {
+    if (currentGroup.length === 0) {
+      currentGroup.push(day);
+    } else {
+      dayGroups.push(currentGroup.map(d => dayAbbr[d]).join('-'));
+      currentGroup = [day];
+    }
+  }
+
+  if (currentGroup.length > 0) {
+    dayGroups.push(currentGroup.map(d => dayAbbr[d]).join('-'));
+  }
+
+  // Get first time slot as representative
+  const firstDay = scheduledDays[0];
+  const firstSlot = schedule[firstDay][0];
+
+  if (scheduledDays.length === 7) {
+    return `Every day ${firstSlot.start}-${firstSlot.end}`;
+  }
+
+  return `${scheduledDays.map(d => dayAbbr[d]).join(', ')} ${firstSlot.start}-${firstSlot.end}`;
 };
 
 // Add media to campaign (metadata only - actual file stored in IndexedDB)
