@@ -44,12 +44,6 @@ const ScreenOwnerDashboard = () => {
     }
     setUser(currentUser);
 
-    // Set first venue as default if available
-    const venues = currentUser.venues || [];
-    if (venues.length > 0 && !selectedVenue) {
-      setSelectedVenue(venues[0]);
-    }
-
     loadScreens(currentUser.id);
     loadCampaigns();
     loadCustomContent(currentUser.id);
