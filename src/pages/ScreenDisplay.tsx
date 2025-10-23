@@ -535,7 +535,7 @@ const ScreenDisplay = () => {
       <div className="min-h-screen w-full bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-8">
         <Card className="p-12 text-center max-w-2xl bg-card/95 backdrop-blur-md border-primary/20">
           <Tv className="mx-auto mb-6 text-primary" size={80} />
-          <h1 className="text-4xl font-bold mb-4 gradient-primary bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold mb-4 text-primary">
             Screen Paired Successfully
           </h1>
           <p className="text-2xl text-muted-foreground">
@@ -561,7 +561,7 @@ const ScreenDisplay = () => {
           </div>
         </div>
 
-        <h1 className="text-5xl font-bold mb-4 gradient-primary bg-clip-text text-transparent">
+        <h1 className="text-5xl font-bold mb-4 text-primary">
           AdVenue Screen
         </h1>
 

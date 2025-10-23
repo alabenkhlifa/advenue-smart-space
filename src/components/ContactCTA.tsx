@@ -32,7 +32,7 @@ const ContactCTA = () => {
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
               Ready to{" "}
-              <span className="gradient-primary bg-clip-text text-transparent">
+              <span className="text-primary">
                 Get Started?
               </span>
             </h2>

@@ -109,7 +109,7 @@ const AdvertiserRegister = () => {
               <Building2 className="text-primary" size={32} />
             </div>
           </div>
-          <CardTitle className="text-3xl font-bold text-center gradient-primary bg-clip-text text-transparent">
+          <CardTitle className="text-3xl font-bold text-center text-primary">
             Register as Advertiser
           </CardTitle>
           <CardDescription className="text-center">

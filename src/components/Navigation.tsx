@@ -20,7 +20,7 @@ const Navigation = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex-shrink-0 group cursor-pointer">
-            <h1 className="text-2xl font-bold gradient-primary bg-clip-text text-transparent group-hover:scale-105 transition-transform">
+            <h1 className="text-2xl font-bold text-primary group-hover:scale-105 transition-transform">
               AdVenue
             </h1>
           </div>

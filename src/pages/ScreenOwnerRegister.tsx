@@ -165,7 +165,7 @@ const ScreenOwnerRegister = () => {
               <Tv className="text-primary" size={32} />
             </div>
           </div>
-          <CardTitle className="text-3xl font-bold text-center gradient-primary bg-clip-text text-transparent">
+          <CardTitle className="text-3xl font-bold text-center text-primary">
             Register as Screen Owner
           </CardTitle>
           <CardDescription className="text-center">

@@ -78,7 +78,7 @@ const Login = () => {
       {/* Login Card */}
       <Card className="relative z-10 w-full max-w-md mx-4 shadow-2xl border-primary/20 bg-card/95 backdrop-blur-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-3xl font-bold text-center gradient-primary bg-clip-text text-transparent">
+          <CardTitle className="text-3xl font-bold text-center text-primary">
             Welcome Back
           </CardTitle>
           <CardDescription className="text-center">

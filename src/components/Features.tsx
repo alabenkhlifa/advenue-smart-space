@@ -72,7 +72,7 @@ const Features = () => {
         <div className="text-center mb-16">
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
             Everything You Need to{" "}
-            <span className="gradient-primary bg-clip-text text-transparent">
+            <span className="text-primary">
               Succeed
             </span>
           </h2>

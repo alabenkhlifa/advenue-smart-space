@@ -149,7 +149,7 @@ export function CustomContentManager({
           onClick={() => setActiveTab('menus')}
           className={`px-4 py-2 font-medium text-sm transition-colors ${
             activeTab === 'menus'
-              ? 'text-purple-600 border-b-2 border-purple-600'
+              ? 'text-primary border-b-2 border-primary'
               : 'text-gray-600 hover:text-gray-900'
           }`}
         >
@@ -160,7 +160,7 @@ export function CustomContentManager({
           onClick={() => setActiveTab('youtube')}
           className={`px-4 py-2 font-medium text-sm transition-colors ${
             activeTab === 'youtube'
-              ? 'text-purple-600 border-b-2 border-purple-600'
+              ? 'text-primary border-b-2 border-primary'
               : 'text-gray-600 hover:text-gray-900'
           }`}
         >
@@ -188,7 +188,7 @@ export function CustomContentManager({
                 value={menuTitle}
                 onChange={e => setMenuTitle(e.target.value)}
                 placeholder="Menu title (optional)"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
               />
               <label className="relative">
                 <input
@@ -198,7 +198,7 @@ export function CustomContentManager({
                   disabled={isUploading}
                   className="hidden"
                 />
-                <div className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors cursor-pointer flex items-center gap-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+                <div className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors cursor-pointer flex items-center gap-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
                   <Upload className="w-4 h-4" />
                   {isUploading ? 'Uploading...' : 'Upload'}
                 </div>
@@ -265,7 +265,7 @@ export function CustomContentManager({
                 value={youtubeTitle}
                 onChange={e => setYoutubeTitle(e.target.value)}
                 placeholder="Title (e.g., 'Main Menu Display')"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
                 required
               />
               <div className="flex gap-2">
@@ -274,12 +274,12 @@ export function CustomContentManager({
                   value={youtubeUrl}
                   onChange={e => setYoutubeUrl(e.target.value)}
                   placeholder="YouTube URL (video or playlist)"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
                   required
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors flex items-center gap-2 text-sm font-medium"
+                  className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors flex items-center gap-2 text-sm font-medium"
                 >
                   <Plus className="w-4 h-4" />
                   Add

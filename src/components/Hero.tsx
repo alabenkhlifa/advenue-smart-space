@@ -44,7 +44,7 @@ const Hero = () => {
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 animate-fade-in-up">
             Turn Screens Into{" "}
-            <span className="gradient-primary bg-clip-text text-transparent">
+            <span className="text-primary">
               Revenue
             </span>
           </h1>
