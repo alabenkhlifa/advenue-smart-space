@@ -22,7 +22,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      <BrowserRouter basename="/advenue-smart-space">
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
