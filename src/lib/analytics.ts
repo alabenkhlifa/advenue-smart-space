@@ -432,3 +432,323 @@ export const cleanupOldImpressions = (): void => {
     saveQRScans(filteredScans);
   }
 };
+
+// ============================================================================
+// Enhanced Analytics Functions for Sophisticated Reporting
+// ============================================================================
+
+export interface VenuePerformance {
+  venueId: string;
+  venueName?: string;
+  impressions: number;
+  duration: number;
+  qrScans: number;
+  ctr: number; // Click-through rate (%)
+  region?: string;
+  city?: string;
+}
+
+export interface MediaPerformance {
+  mediaId: string;
+  impressions: number;
+  duration: number;
+  qrScans: number;
+  ctr: number; // Click-through rate (%)
+  avgDuration: number; // Average duration per impression
+  engagementScore: number; // Calculated score based on views and scans
+}
+
+export interface TimeOfDayAnalytics {
+  hour: number; // 0-23
+  impressions: number;
+  qrScans: number;
+  duration: number;
+}
+
+export interface EngagementMetrics {
+  totalImpressions: number;
+  totalQRScans: number;
+  overallCTR: number; // Overall click-through rate (%)
+  avgDuration: number; // Average duration per impression in milliseconds
+  totalReach: number; // Unique screens reached
+  totalVenues: number; // Unique venues reached
+  peakHour?: number; // Hour with most activity
+  peakDay?: string; // Date with most activity
+}
+
+// Get venue-level performance breakdown
+export const getVenuePerformance = (
+  campaignId: string,
+  startDate?: Date,
+  endDate?: Date
+): VenuePerformance[] => {
+  let impressions = getCampaignImpressions(campaignId);
+  let qrScans = getQRScans().filter(scan => scan.campaignId === campaignId);
+
+  // Filter by date range
+  if (startDate) {
+    impressions = impressions.filter(imp => imp.timestamp >= startDate.getTime());
+    qrScans = qrScans.filter(scan => scan.timestamp >= startDate.getTime());
+  }
+  if (endDate) {
+    impressions = impressions.filter(imp => imp.timestamp <= endDate.getTime());
+    qrScans = qrScans.filter(scan => scan.timestamp <= endDate.getTime());
+  }
+
+  // Group by venue
+  const venueMap: Record<string, VenuePerformance> = {};
+
+  impressions.forEach(imp => {
+    const venueId = imp.venueId || 'unknown';
+    if (!venueMap[venueId]) {
+      venueMap[venueId] = {
+        venueId,
+        venueName: imp.venueName,
+        impressions: 0,
+        duration: 0,
+        qrScans: 0,
+        ctr: 0,
+        region: imp.region,
+        city: imp.city,
+      };
+    }
+    venueMap[venueId].impressions++;
+    venueMap[venueId].duration += imp.duration;
+  });
+
+  qrScans.forEach(scan => {
+    const venueId = scan.venueId || 'unknown';
+    if (!venueMap[venueId]) {
+      venueMap[venueId] = {
+        venueId,
+        impressions: 0,
+        duration: 0,
+        qrScans: 0,
+        ctr: 0,
+        region: scan.region,
+        city: scan.city,
+      };
+    }
+    venueMap[venueId].qrScans++;
+  });
+
+  // Calculate CTR for each venue
+  Object.values(venueMap).forEach(venue => {
+    venue.ctr = venue.impressions > 0 ? (venue.qrScans / venue.impressions) * 100 : 0;
+  });
+
+  return Object.values(venueMap).sort((a, b) => b.impressions - a.impressions);
+};
+
+// Get media-level performance with detailed metrics
+export const getMediaPerformance = (
+  campaignId: string,
+  startDate?: Date,
+  endDate?: Date
+): MediaPerformance[] => {
+  let impressions = getCampaignImpressions(campaignId);
+  let qrScans = getQRScans().filter(scan => scan.campaignId === campaignId);
+
+  // Filter by date range
+  if (startDate) {
+    impressions = impressions.filter(imp => imp.timestamp >= startDate.getTime());
+    qrScans = qrScans.filter(scan => scan.timestamp >= startDate.getTime());
+  }
+  if (endDate) {
+    impressions = impressions.filter(imp => imp.timestamp <= endDate.getTime());
+    qrScans = qrScans.filter(scan => scan.timestamp <= endDate.getTime());
+  }
+
+  // Group by media
+  const mediaMap: Record<string, MediaPerformance> = {};
+
+  impressions.forEach(imp => {
+    if (!mediaMap[imp.mediaId]) {
+      mediaMap[imp.mediaId] = {
+        mediaId: imp.mediaId,
+        impressions: 0,
+        duration: 0,
+        qrScans: 0,
+        ctr: 0,
+        avgDuration: 0,
+        engagementScore: 0,
+      };
+    }
+    mediaMap[imp.mediaId].impressions++;
+    mediaMap[imp.mediaId].duration += imp.duration;
+  });
+
+  qrScans.forEach(scan => {
+    if (!mediaMap[scan.mediaId]) {
+      mediaMap[scan.mediaId] = {
+        mediaId: scan.mediaId,
+        impressions: 0,
+        duration: 0,
+        qrScans: 0,
+        ctr: 0,
+        avgDuration: 0,
+        engagementScore: 0,
+      };
+    }
+    mediaMap[scan.mediaId].qrScans++;
+  });
+
+  // Calculate metrics for each media
+  Object.values(mediaMap).forEach(media => {
+    media.ctr = media.impressions > 0 ? (media.qrScans / media.impressions) * 100 : 0;
+    media.avgDuration = media.impressions > 0 ? media.duration / media.impressions : 0;
+    // Engagement score: weighted combination of impressions, CTR, and avg duration
+    // Normalized to 0-100 scale
+    media.engagementScore = Math.min(100,
+      (media.impressions * 0.3) +
+      (media.ctr * 5) +
+      (media.avgDuration / 1000 * 0.1)
+    );
+  });
+
+  return Object.values(mediaMap).sort((a, b) => b.engagementScore - a.engagementScore);
+};
+
+// Get hourly performance analytics
+export const getHourlyAnalytics = (
+  campaignId: string,
+  startDate?: Date,
+  endDate?: Date
+): TimeOfDayAnalytics[] => {
+  let impressions = getCampaignImpressions(campaignId);
+  let qrScans = getQRScans().filter(scan => scan.campaignId === campaignId);
+
+  // Filter by date range
+  if (startDate) {
+    impressions = impressions.filter(imp => imp.timestamp >= startDate.getTime());
+    qrScans = qrScans.filter(scan => scan.timestamp >= startDate.getTime());
+  }
+  if (endDate) {
+    impressions = impressions.filter(imp => imp.timestamp <= endDate.getTime());
+    qrScans = qrScans.filter(scan => scan.timestamp <= endDate.getTime());
+  }
+
+  // Initialize hourly data (0-23)
+  const hourlyData: TimeOfDayAnalytics[] = Array.from({ length: 24 }, (_, i) => ({
+    hour: i,
+    impressions: 0,
+    qrScans: 0,
+    duration: 0,
+  }));
+
+  impressions.forEach(imp => {
+    const hour = new Date(imp.timestamp).getHours();
+    hourlyData[hour].impressions++;
+    hourlyData[hour].duration += imp.duration;
+  });
+
+  qrScans.forEach(scan => {
+    const hour = new Date(scan.timestamp).getHours();
+    hourlyData[hour].qrScans++;
+  });
+
+  return hourlyData;
+};
+
+// Get comprehensive engagement metrics
+export const getEngagementMetrics = (
+  campaignId: string,
+  startDate?: Date,
+  endDate?: Date
+): EngagementMetrics => {
+  let impressions = getCampaignImpressions(campaignId);
+  let qrScans = getQRScans().filter(scan => scan.campaignId === campaignId);
+
+  // Filter by date range
+  if (startDate) {
+    impressions = impressions.filter(imp => imp.timestamp >= startDate.getTime());
+    qrScans = qrScans.filter(scan => scan.timestamp >= startDate.getTime());
+  }
+  if (endDate) {
+    impressions = impressions.filter(imp => imp.timestamp <= endDate.getTime());
+    qrScans = qrScans.filter(scan => scan.timestamp <= endDate.getTime());
+  }
+
+  const totalImpressions = impressions.length;
+  const totalQRScans = qrScans.length;
+  const totalDuration = impressions.reduce((sum, imp) => sum + imp.duration, 0);
+
+  // Calculate unique screens and venues
+  const uniqueScreens = new Set(impressions.map(imp => imp.screenId));
+  const uniqueVenues = new Set(impressions.map(imp => imp.venueId).filter(Boolean));
+
+  // Find peak hour
+  const hourlyData = getHourlyAnalytics(campaignId, startDate, endDate);
+  const peakHourData = hourlyData.reduce((max, curr) =>
+    curr.impressions > max.impressions ? curr : max
+  );
+
+  // Find peak day
+  const analytics = getCampaignAnalytics(campaignId, startDate, endDate);
+  const peakDayEntry = Object.entries(analytics.dailyBreakdown).reduce((max, [date, data]) =>
+    data.impressions > max[1].impressions ? [date, data] : max
+  , ['', { impressions: 0, duration: 0, qrScans: 0 }]);
+
+  return {
+    totalImpressions,
+    totalQRScans,
+    overallCTR: totalImpressions > 0 ? (totalQRScans / totalImpressions) * 100 : 0,
+    avgDuration: totalImpressions > 0 ? totalDuration / totalImpressions : 0,
+    totalReach: uniqueScreens.size,
+    totalVenues: uniqueVenues.size,
+    peakHour: peakHourData.impressions > 0 ? peakHourData.hour : undefined,
+    peakDay: peakDayEntry[0] || undefined,
+  };
+};
+
+// Export campaign data to CSV format
+export const exportCampaignToCSV = (campaignId: string, campaignName: string): string => {
+  const analytics = getCampaignAnalytics(campaignId);
+  const mediaPerf = getMediaPerformance(campaignId);
+  const venuePerf = getVenuePerformance(campaignId);
+  const engagement = getEngagementMetrics(campaignId);
+
+  let csv = '';
+
+  // Header
+  csv += `Campaign Analytics Report\n`;
+  csv += `Campaign: ${campaignName}\n`;
+  csv += `Generated: ${new Date().toLocaleString()}\n\n`;
+
+  // Overview metrics
+  csv += `Overview Metrics\n`;
+  csv += `Metric,Value\n`;
+  csv += `Total Impressions,${engagement.totalImpressions}\n`;
+  csv += `Total QR Scans,${engagement.totalQRScans}\n`;
+  csv += `Click-Through Rate,${engagement.overallCTR.toFixed(2)}%\n`;
+  csv += `Average Duration,${formatDuration(engagement.avgDuration)}\n`;
+  csv += `Total Reach (Screens),${engagement.totalReach}\n`;
+  csv += `Total Venues,${engagement.totalVenues}\n\n`;
+
+  // Media performance
+  csv += `Media Performance\n`;
+  csv += `Media ID,Impressions,QR Scans,CTR (%),Avg Duration,Engagement Score\n`;
+  mediaPerf.forEach(media => {
+    csv += `${media.mediaId},${media.impressions},${media.qrScans},${media.ctr.toFixed(2)},${formatDuration(media.avgDuration)},${media.engagementScore.toFixed(2)}\n`;
+  });
+  csv += `\n`;
+
+  // Venue performance
+  csv += `Venue Performance\n`;
+  csv += `Venue Name,City,Region,Impressions,QR Scans,CTR (%)\n`;
+  venuePerf.forEach(venue => {
+    csv += `${venue.venueName || 'Unknown'},${venue.city || 'N/A'},${venue.region || 'N/A'},${venue.impressions},${venue.qrScans},${venue.ctr.toFixed(2)}\n`;
+  });
+  csv += `\n`;
+
+  // Daily breakdown
+  csv += `Daily Performance\n`;
+  csv += `Date,Impressions,QR Scans,Duration\n`;
+  Object.entries(analytics.dailyBreakdown)
+    .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
+    .forEach(([date, data]) => {
+      csv += `${date},${data.impressions},${data.qrScans},${formatDuration(data.duration)}\n`;
+    });
+
+  return csv;
+};

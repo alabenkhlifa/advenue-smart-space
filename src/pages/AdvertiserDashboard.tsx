@@ -11,7 +11,14 @@ import {
   Campaign,
 } from "@/lib/campaigns";
 import { getMediaFile, blobToDataUrl } from "@/lib/mediaStorage";
-import { getCampaignAnalytics, formatDuration } from "@/lib/analytics";
+import {
+  getCampaignAnalytics,
+  formatDuration,
+  getMediaPerformance,
+  getVenuePerformance,
+  getHourlyAnalytics,
+  getEngagementMetrics,
+} from "@/lib/analytics";
 import { getCampaignQRAnalytics } from "@/lib/qrAnalytics";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,14 +30,27 @@ import { useToast } from "@/hooks/use-toast";
 import { LogOut, Plus, Upload, Play, Pause, BarChart3, X, QrCode, Calendar as CalendarIcon, Pencil } from "lucide-react";
 import MediaThumbnail from "@/components/MediaThumbnail";
 import { format } from "date-fns";
+import { DateRangeFilter } from "@/components/analytics/DateRangeFilter";
+import { EngagementMetrics } from "@/components/analytics/EngagementMetrics";
+import { PerformanceCharts } from "@/components/analytics/PerformanceCharts";
+import { MediaPerformanceTable } from "@/components/analytics/MediaPerformanceTable";
+import { VenueInsights } from "@/components/analytics/VenueInsights";
+import { ExportButton } from "@/components/analytics/ExportButton";
 
 const AdvertiserDashboard = () => {
   const [user, setUser] = useState<any>(null);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [uploadingMedia, setUploadingMedia] = useState(false);
+  const [dateRangeStart, setDateRangeStart] = useState<Date | undefined>();
+  const [dateRangeEnd, setDateRangeEnd] = useState<Date | undefined>();
 
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const handleDateRangeChange = (startDate: Date | undefined, endDate: Date | undefined) => {
+    setDateRangeStart(startDate);
+    setDateRangeEnd(endDate);
+  };
 
   useEffect(() => {
     const currentUser = requireAuth("advertiser");
@@ -365,94 +385,83 @@ const AdvertiserDashboard = () => {
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-6">
-            <h2 className="text-3xl font-bold">Campaign Analytics</h2>
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <h2 className="text-3xl font-bold">Campaign Analytics</h2>
+              <DateRangeFilter onDateRangeChange={handleDateRangeChange} />
+            </div>
 
             {campaigns.map((campaign) => {
-              const analytics = getCampaignAnalytics(campaign.id);
-              const qrAnalytics = getCampaignQRAnalytics(campaign.id);
+              const analytics = getCampaignAnalytics(campaign.id, dateRangeStart, dateRangeEnd);
+              const engagement = getEngagementMetrics(campaign.id, dateRangeStart, dateRangeEnd);
+              const mediaPerf = getMediaPerformance(campaign.id, dateRangeStart, dateRangeEnd);
+              const venuePerf = getVenuePerformance(campaign.id, dateRangeStart, dateRangeEnd);
+              const hourlyData = getHourlyAnalytics(campaign.id, dateRangeStart, dateRangeEnd);
 
               return (
-                <Card key={campaign.id}>
-                  <CardHeader>
-                    <CardTitle>{campaign.name}</CardTitle>
-                    <CardDescription>{campaign.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    {/* Impression Analytics */}
+                <div key={campaign.id} className="space-y-6">
+                  {/* Campaign Header */}
+                  <Card className="bg-gradient-to-r from-primary/5 to-accent/5 border-primary/20">
+                    <CardHeader>
+                      <div className="flex items-start justify-between flex-wrap gap-4">
+                        <div>
+                          <CardTitle className="text-2xl">{campaign.name}</CardTitle>
+                          <CardDescription className="mt-1">{campaign.description}</CardDescription>
+                          {campaign.category && (
+                            <Badge variant="outline" className="mt-2">
+                              {campaign.category}
+                            </Badge>
+                          )}
+                        </div>
+                        <ExportButton campaignId={campaign.id} campaignName={campaign.name} />
+                      </div>
+                    </CardHeader>
+                  </Card>
+
+                  {/* Engagement Metrics - Overview */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">Overview</h3>
+                    <EngagementMetrics metrics={engagement} />
+                  </div>
+
+                  {/* Performance Charts */}
+                  {engagement.totalImpressions > 0 && (
                     <div>
-                      <h3 className="text-lg font-semibold mb-3">Impressions</h3>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="bg-muted/50 rounded-lg p-4">
-                          <p className="text-sm text-muted-foreground mb-1">Total Impressions</p>
-                          <p className="text-3xl font-bold text-primary">
-                            {analytics.totalImpressions}
-                          </p>
-                        </div>
-                        <div className="bg-muted/50 rounded-lg p-4">
-                          <p className="text-sm text-muted-foreground mb-1">Total Duration</p>
-                          <p className="text-2xl font-bold text-accent">
-                            {formatDuration(analytics.totalDuration)}
-                          </p>
-                        </div>
-                        <div className="bg-muted/50 rounded-lg p-4">
-                          <p className="text-sm text-muted-foreground mb-1">Screens</p>
-                          <p className="text-3xl font-bold text-foreground">
-                            {Object.keys(analytics.screenBreakdown).length}
-                          </p>
-                        </div>
-                        <div className="bg-muted/50 rounded-lg p-4">
-                          <p className="text-sm text-muted-foreground mb-1">Avg per Screen</p>
-                          <p className="text-3xl font-bold text-foreground">
-                            {Object.keys(analytics.screenBreakdown).length > 0
-                              ? Math.round(
-                                  analytics.totalImpressions /
-                                    Object.keys(analytics.screenBreakdown).length
-                                )
-                              : 0}
-                          </p>
-                        </div>
-                      </div>
+                      <h3 className="text-lg font-semibold mb-4">Performance Trends</h3>
+                      <PerformanceCharts
+                        dailyData={analytics.dailyBreakdown}
+                        hourlyData={hourlyData}
+                        mediaData={mediaPerf}
+                        venueData={venuePerf}
+                      />
                     </div>
+                  )}
 
-                    {/* QR Code Analytics */}
-                    {campaign.targetUrl && (
-                      <div>
-                        <div className="flex items-center gap-2 mb-3">
-                          <QrCode className="text-primary" size={20} />
-                          <h3 className="text-lg font-semibold">QR Code Scans</h3>
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                          <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
-                            <p className="text-sm text-muted-foreground mb-1">Total Scans</p>
-                            <p className="text-3xl font-bold text-primary">
-                              {qrAnalytics.totalScans}
-                            </p>
-                          </div>
-                          <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
-                            <p className="text-sm text-muted-foreground mb-1">Screens with Scans</p>
-                            <p className="text-3xl font-bold text-foreground">
-                              {Object.keys(qrAnalytics.screenBreakdown).length}
-                            </p>
-                          </div>
-                          <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
-                            <p className="text-sm text-muted-foreground mb-1">Avg Scans/Screen</p>
-                            <p className="text-3xl font-bold text-foreground">
-                              {Object.keys(qrAnalytics.screenBreakdown).length > 0
-                                ? Math.round(
-                                    qrAnalytics.totalScans /
-                                      Object.keys(qrAnalytics.screenBreakdown).length
-                                  )
-                                : 0}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                  {/* Media Performance Table */}
+                  {mediaPerf.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4">Media Performance</h3>
+                      <MediaPerformanceTable
+                        mediaPerformance={mediaPerf}
+                        campaignMedia={campaign.media}
+                      />
+                    </div>
+                  )}
 
-                    {/* District Analytics */}
-                    {Object.keys(analytics.regionBreakdown).length > 0 && (
-                      <div>
-                        <h3 className="text-lg font-semibold mb-3">Performance by District</h3>
+                  {/* Venue Insights */}
+                  {venuePerf.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4">Location Insights</h3>
+                      <VenueInsights venuePerformance={venuePerf.slice(0, 10)} />
+                    </div>
+                  )}
+
+                  {/* Legacy District/City Breakdown (if venue data not available) */}
+                  {venuePerf.length === 0 && Object.keys(analytics.regionBreakdown).length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Performance by District</CardTitle>
+                      </CardHeader>
+                      <CardContent>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {Object.entries(analytics.regionBreakdown)
                             .sort(([, a], [, b]) => b.impressions - a.impressions)
@@ -476,39 +485,22 @@ const AdvertiserDashboard = () => {
                               </div>
                             ))}
                         </div>
-                      </div>
-                    )}
-
-                    {/* City Analytics */}
-                    {Object.keys(analytics.cityBreakdown).length > 0 && (
-                      <div>
-                        <h3 className="text-lg font-semibold mb-3">Performance by City</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {Object.entries(analytics.cityBreakdown)
-                            .sort(([, a], [, b]) => b.impressions - a.impressions)
-                            .slice(0, 6)
-                            .map(([city, data]) => (
-                              <div key={city} className="bg-muted/30 rounded-lg p-4 border">
-                                <h4 className="font-semibold text-foreground mb-2">{city}</h4>
-                                <div className="space-y-1 text-sm">
-                                  <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Impressions:</span>
-                                    <span className="font-bold text-primary">{data.impressions}</span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-muted-foreground">QR Scans:</span>
-                                    <span className="font-bold text-accent">{data.qrScans}</span>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
               );
             })}
+
+            {campaigns.length === 0 && (
+              <Card className="p-12 text-center">
+                <BarChart3 className="mx-auto mb-4 text-muted-foreground" size={64} />
+                <h3 className="text-xl font-semibold mb-2">No campaigns yet</h3>
+                <p className="text-muted-foreground">
+                  Create your first campaign to see analytics
+                </p>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </main>
