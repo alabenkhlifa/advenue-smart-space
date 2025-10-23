@@ -37,6 +37,18 @@ const initDB = (): Promise<IDBDatabase> => {
 
 // Store media file in IndexedDB
 export const storeMediaFile = async (media: StoredMedia): Promise<void> => {
+  console.log('[storeMediaFile] Storing media:', {
+    id: media.id,
+    type: media.type,
+    blobSize: media.blob?.size,
+    blobType: media.blob?.type,
+    isBlob: media.blob instanceof Blob
+  });
+
+  if (!(media.blob instanceof Blob)) {
+    throw new Error('media.blob must be a Blob instance');
+  }
+
   const db = await initDB();
 
   return new Promise((resolve, reject) => {
@@ -44,13 +56,20 @@ export const storeMediaFile = async (media: StoredMedia): Promise<void> => {
     const store = transaction.objectStore(STORE_NAME);
     const request = store.put(media);
 
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      console.log('[storeMediaFile] Successfully stored media:', media.id);
+      resolve();
+    };
+    request.onerror = () => {
+      console.error('[storeMediaFile] Error storing media:', request.error);
+      reject(request.error);
+    };
   });
 };
 
 // Get media file from IndexedDB
 export const getMediaFile = async (id: string): Promise<StoredMedia | null> => {
+  console.log('[getMediaFile] Retrieving media:', id);
   const db = await initDB();
 
   return new Promise((resolve, reject) => {
@@ -58,8 +77,25 @@ export const getMediaFile = async (id: string): Promise<StoredMedia | null> => {
     const store = transaction.objectStore(STORE_NAME);
     const request = store.get(id);
 
-    request.onsuccess = () => resolve(request.result || null);
-    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      const result = request.result || null;
+      if (result) {
+        console.log('[getMediaFile] Found media:', {
+          id: result.id,
+          type: result.type,
+          blobSize: result.blob?.size,
+          blobType: result.blob?.type,
+          isBlob: result.blob instanceof Blob
+        });
+      } else {
+        console.log('[getMediaFile] No media found for id:', id);
+      }
+      resolve(result);
+    };
+    request.onerror = () => {
+      console.error('[getMediaFile] Error retrieving media:', request.error);
+      reject(request.error);
+    };
   });
 };
 
@@ -111,7 +147,14 @@ export const blobToDataUrl = (blob: Blob): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
+    reader.onerror = (error) => {
+      console.error('[blobToDataUrl] FileReader error:', error);
+      console.error('[blobToDataUrl] Blob details:', {
+        size: blob.size,
+        type: blob.type
+      });
+      reject(error);
+    };
     reader.readAsDataURL(blob);
   });
 };

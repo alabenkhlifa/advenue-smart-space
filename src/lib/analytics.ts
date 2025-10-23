@@ -3,7 +3,7 @@ export interface ImpressionEvent {
   screenId: string;
   campaignId: string;
   mediaId: string;
-  mediaType: 'image' | 'video';
+  mediaType: 'image' | 'video' | 'custom' | string; // Support custom content types
   startTime: number;
   endTime: number;
   duration: number; // in milliseconds
@@ -83,7 +83,7 @@ export const startImpression = (
   screenId: string,
   campaignId: string,
   mediaId: string,
-  mediaType: 'image' | 'video',
+  mediaType: 'image' | 'video' | 'custom' | string,
   metadata?: {
     venueName?: string;
     venueId?: string;

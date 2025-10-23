@@ -28,6 +28,8 @@ export interface Campaign {
   endDate?: number;
 }
 
+export type ContentMode = 'ads-only' | 'custom-only' | 'mixed';
+
 export interface ScreenCampaignSettings {
   screenId: string;
   selectedCampaignIds: string[];
@@ -37,6 +39,12 @@ export interface ScreenCampaignSettings {
   rotationMode: 'sequential' | 'random' | 'weighted';
   campaignPriorities?: Record<string, number>; // campaignId -> priority (1-10)
   videoPlaybackMode: 'complete' | 'rotation' | 'smart'; // How to handle video playback
+
+  // Custom content settings for screen owners
+  contentMode?: ContentMode; // What type of content to display
+  customContentIds?: string[]; // IDs of custom content to display
+  showAds?: boolean; // Whether to show ads at all (screen owner's control)
+  adsContentRatio?: number; // Percentage of time showing ads (0-100), remaining time is custom content
 }
 
 const CAMPAIGNS_KEY = 'advenue_campaigns';
@@ -302,6 +310,10 @@ export const getScreenCampaignSettings = (
       rotationFrequency: 10,
       rotationMode: 'sequential',
       videoPlaybackMode: 'smart', // Default to smart mode
+      contentMode: 'ads-only', // Default to showing only ads
+      customContentIds: [],
+      showAds: true, // Default to showing ads
+      adsContentRatio: 50, // Default 50% ads, 50% content
     }
   );
 };
@@ -313,11 +325,22 @@ export const updateScreenCampaignSettings = (
   const allSettings = getScreenSettings();
   allSettings[settings.screenId] = settings;
   saveScreenSettings(allSettings);
+
+  // Dispatch custom event for same-window reactivity
+  window.dispatchEvent(new CustomEvent('advenue-settings-changed', {
+    detail: { screenId: settings.screenId, settings }
+  }));
 };
 
-// Get media to display on a screen
+// Get media to display on a screen (ads only)
 export const getScreenMedia = (screenId: string): MediaFile[] => {
   const settings = getScreenCampaignSettings(screenId);
+
+  // If showAds is false or contentMode is custom-only, return empty array
+  if (settings.showAds === false || settings.contentMode === 'custom-only') {
+    return [];
+  }
+
   const allCampaigns = getActiveCampaigns();
 
   let campaignsToDisplay: Campaign[];
