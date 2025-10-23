@@ -282,7 +282,11 @@ const AdvertiserDashboard = () => {
                     <div className="flex items-start justify-between">
                       <CardTitle className="text-xl">{campaign.name}</CardTitle>
                       <Badge
-                        variant={campaign.status === "active" ? "default" : "secondary"}
+                        variant={
+                          campaign.status === "active" ? "success" :
+                          campaign.status === "paused" ? "warning" :
+                          "secondary"
+                        }
                       >
                         {campaign.status}
                       </Badge>

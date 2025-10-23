@@ -16,6 +16,7 @@ export interface PairedScreen {
   tokenExpiresAt: number;
   venueName?: string; // Legacy field
   venueId?: string;
+  customName?: string; // Custom alias/name set by screen owner
   status: 'online' | 'offline';
   lastSeen: number;
 }
@@ -288,4 +289,23 @@ export const updateScreenStatuses = (): void => {
   if (changed) {
     localStorage.setItem(PAIRED_SCREENS_KEY, JSON.stringify(pairedScreens));
   }
+};
+
+// Update screen custom name
+export const updateScreenName = (
+  screenId: string,
+  ownerId: string,
+  customName: string
+): boolean => {
+  const pairedScreens = getPairedScreens();
+  const screen = pairedScreens[screenId];
+
+  if (!screen || screen.ownerId !== ownerId) {
+    return false;
+  }
+
+  screen.customName = customName.trim() || undefined;
+  pairedScreens[screenId] = screen;
+  localStorage.setItem(PAIRED_SCREENS_KEY, JSON.stringify(pairedScreens));
+  return true;
 };

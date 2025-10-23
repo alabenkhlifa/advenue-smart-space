@@ -355,12 +355,9 @@ const ScreenDisplay = () => {
     if (currentItem.type === 'ad' && currentItem.mediaFile && currentItem.mediaFile.type === 'video') {
       const videoDuration = currentItem.mediaFile.duration || 0;
       const videoDurationMs = videoDuration * 1000;
+      const playbackMode = settings.videoPlaybackMode || 'smart';
 
-      switch (settings.videoPlaybackMode) {
-        case 'complete':
-          // Always play to completion
-          timeoutMs = videoDurationMs || rotationMs;
-          break;
+      switch (playbackMode) {
         case 'rotation':
           // Use rotation time (may cut video)
           timeoutMs = rotationMs;
@@ -438,9 +435,10 @@ const ScreenDisplay = () => {
       if (currentMedia.type === 'video') {
         const videoDuration = (currentMedia.duration || 0) * 1000;
         const rotationMs = settings.rotationFrequency * 1000;
+        const playbackMode = settings.videoPlaybackMode || 'smart';
 
-        if (settings.videoPlaybackMode === 'rotation' ||
-            (settings.videoPlaybackMode === 'smart' && videoDuration < rotationMs)) {
+        if (playbackMode === 'rotation' ||
+            (playbackMode === 'smart' && videoDuration < rotationMs)) {
           shouldLoop = true;
         }
       }

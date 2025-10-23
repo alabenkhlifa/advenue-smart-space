@@ -38,7 +38,7 @@ export interface ScreenCampaignSettings {
   rotationFrequency: number; // in seconds
   rotationMode: 'sequential' | 'random' | 'weighted';
   campaignPriorities?: Record<string, number>; // campaignId -> priority (1-10)
-  videoPlaybackMode: 'complete' | 'rotation' | 'smart'; // How to handle video playback
+  videoPlaybackMode: 'rotation' | 'smart'; // How to handle video playback
 
   // Custom content settings for screen owners
   contentMode?: ContentMode; // What type of content to display

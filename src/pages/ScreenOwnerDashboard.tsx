@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { requireAuth, logout, Venue } from "@/lib/auth";
-import { validateAndPairScreen, getOwnerScreens, unpairScreen, PairedScreen } from "@/lib/pairing";
+import { validateAndPairScreen, getOwnerScreens, unpairScreen, updateScreenName, updateScreenStatuses, PairedScreen } from "@/lib/pairing";
 import { getActiveCampaigns, updateScreenCampaignSettings, getScreenCampaignSettings, Campaign, CampaignCategory, ContentMode } from "@/lib/campaigns";
 import { getScreenImpressions, calculateScreenRevenue } from "@/lib/analytics";
 import { getOwnerCustomContent, CustomContent } from "@/lib/customContent";
@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Plus, Tv, TrendingUp, DollarSign, CheckCircle2, XCircle, Building2, FileImage, Youtube } from "lucide-react";
+import { LogOut, Plus, Tv, TrendingUp, DollarSign, CheckCircle2, XCircle, Building2, FileImage, Youtube, Edit2, Check, X } from "lucide-react";
 import MediaThumbnail from "@/components/MediaThumbnail";
 import { CustomContentManager } from "@/components/CustomContentManager";
 import { ContentAdsVisualization } from "@/components/ContentAdsVisualization";
@@ -33,6 +33,8 @@ const ScreenOwnerDashboard = () => {
   const [pairingData, setPairingData] = useState({ screenId: "", pairingCode: "", venueId: "" });
   const [isPairing, setIsPairing] = useState(false);
   const [activeTab, setActiveTab] = useState("screens");
+  const [editingScreenId, setEditingScreenId] = useState<string | null>(null);
+  const [editingScreenName, setEditingScreenName] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -49,7 +51,21 @@ const ScreenOwnerDashboard = () => {
     loadCustomContent(currentUser.id);
   }, [navigate]);
 
+  // Periodically update screen statuses to detect offline screens
+  useEffect(() => {
+    if (!user) return;
+
+    const interval = setInterval(() => {
+      updateScreenStatuses();
+      loadScreens(user.id);
+    }, 10000); // Check every 10 seconds
+
+    return () => clearInterval(interval);
+  }, [user]);
+
   const loadScreens = (ownerId: string) => {
+    // Update screen statuses based on last seen time before loading
+    updateScreenStatuses();
     const ownerScreens = getOwnerScreens(ownerId);
     setScreens(ownerScreens);
   };
@@ -121,6 +137,29 @@ const ScreenOwnerDashboard = () => {
       });
       loadScreens(user.id);
     }
+  };
+
+  const handleStartEditingScreenName = (screen: PairedScreen) => {
+    setEditingScreenId(screen.screenId);
+    setEditingScreenName(screen.customName || "");
+  };
+
+  const handleSaveScreenName = (screenId: string) => {
+    const success = updateScreenName(screenId, user.id, editingScreenName);
+    if (success) {
+      toast({
+        title: "Screen Name Updated",
+        description: "The screen name has been updated successfully.",
+      });
+      setEditingScreenId(null);
+      setEditingScreenName("");
+      loadScreens(user.id);
+    }
+  };
+
+  const handleCancelEditingScreenName = () => {
+    setEditingScreenId(null);
+    setEditingScreenName("");
   };
 
   const handleUpdateScreenSettings = (screenId: string, updates: any) => {
@@ -338,10 +377,80 @@ const ScreenOwnerDashboard = () => {
                   <Card key={screen.screenId} className="hover-lift">
                     <CardHeader>
                       <div className="flex items-start justify-between">
-                        <CardTitle className="text-lg font-mono">
-                          {screen.screenId}
-                        </CardTitle>
-                        <Badge variant={screen.status === "online" ? "default" : "secondary"}>
+                        <div className="flex-1">
+                          {editingScreenId === screen.screenId ? (
+                            <div className="flex items-center gap-2">
+                              <Input
+                                value={editingScreenName}
+                                onChange={(e) => setEditingScreenName(e.target.value)}
+                                placeholder="Enter screen name"
+                                className="h-8"
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    handleSaveScreenName(screen.screenId);
+                                  } else if (e.key === 'Escape') {
+                                    handleCancelEditingScreenName();
+                                  }
+                                }}
+                                autoFocus
+                              />
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0"
+                                onClick={() => handleSaveScreenName(screen.screenId)}
+                              >
+                                <Check size={16} />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0"
+                                onClick={handleCancelEditingScreenName}
+                              >
+                                <X size={16} />
+                              </Button>
+                            </div>
+                          ) : (
+                            <div>
+                              {screen.customName ? (
+                                <>
+                                  <div className="flex items-center gap-2">
+                                    <CardTitle className="text-lg">
+                                      {screen.customName}
+                                    </CardTitle>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-6 w-6 p-0 opacity-50 hover:opacity-100"
+                                      onClick={() => handleStartEditingScreenName(screen)}
+                                    >
+                                      <Edit2 size={14} />
+                                    </Button>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground font-mono mt-1">
+                                    ID: {screen.screenId}
+                                  </p>
+                                </>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <CardTitle className="text-lg font-mono">
+                                    {screen.screenId}
+                                  </CardTitle>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-6 w-6 p-0 opacity-50 hover:opacity-100"
+                                    onClick={() => handleStartEditingScreenName(screen)}
+                                  >
+                                    <Edit2 size={14} />
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        <Badge variant={screen.status === "online" ? "success" : "destructive"}>
                           {screen.status}
                         </Badge>
                       </div>
@@ -388,10 +497,10 @@ const ScreenOwnerDashboard = () => {
                       <div className="space-y-2">
                         <Label>Video Playback Mode</Label>
                         <Select
-                          value={settings.videoPlaybackMode}
+                          value={settings.videoPlaybackMode || 'smart'}
                           onValueChange={(value) =>
                             handleUpdateScreenSettings(screen.screenId, {
-                              videoPlaybackMode: value as 'complete' | 'rotation' | 'smart',
+                              videoPlaybackMode: value as 'rotation' | 'smart',
                             })
                           }
                         >
@@ -400,15 +509,12 @@ const ScreenOwnerDashboard = () => {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="smart">Smart (Recommended)</SelectItem>
-                            <SelectItem value="complete">Always Complete</SelectItem>
                             <SelectItem value="rotation">Respect Timer</SelectItem>
                           </SelectContent>
                         </Select>
                         <p className="text-xs text-muted-foreground">
-                          {settings.videoPlaybackMode === 'smart' &&
+                          {(!settings.videoPlaybackMode || settings.videoPlaybackMode === 'smart') &&
                             'Loop short videos, play long ones completely'}
-                          {settings.videoPlaybackMode === 'complete' &&
-                            'Videos always play to end (ignores rotation timer)'}
                           {settings.videoPlaybackMode === 'rotation' &&
                             'Videos may be cut off if longer than rotation time'}
                         </p>
@@ -540,7 +646,14 @@ const ScreenOwnerDashboard = () => {
                       <div key={screen.screenId} className="border rounded-lg p-4 space-y-3">
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
-                            <p className="font-medium font-mono">{screen.screenId}</p>
+                            {screen.customName ? (
+                              <>
+                                <p className="font-medium">{screen.customName}</p>
+                                <p className="text-xs text-muted-foreground font-mono">ID: {screen.screenId}</p>
+                              </>
+                            ) : (
+                              <p className="font-medium font-mono">{screen.screenId}</p>
+                            )}
                             <p className="text-sm text-muted-foreground">{screen.venueName}</p>
                             <div className="mt-1">
                               <Badge variant="outline" className="text-xs">
@@ -550,7 +663,7 @@ const ScreenOwnerDashboard = () => {
                               </Badge>
                             </div>
                           </div>
-                          <Badge variant={screen.status === "online" ? "default" : "secondary"}>
+                          <Badge variant={screen.status === "online" ? "success" : "destructive"}>
                             {screen.status}
                           </Badge>
                         </div>
@@ -854,7 +967,14 @@ const ScreenOwnerDashboard = () => {
                 return (
                   <Card key={screen.screenId}>
                     <CardHeader>
-                      <CardTitle className="text-lg font-mono">{screen.screenId}</CardTitle>
+                      {screen.customName ? (
+                        <>
+                          <CardTitle className="text-lg">{screen.customName}</CardTitle>
+                          <p className="text-xs text-muted-foreground font-mono">ID: {screen.screenId}</p>
+                        </>
+                      ) : (
+                        <CardTitle className="text-lg font-mono">{screen.screenId}</CardTitle>
+                      )}
                       <CardDescription>{screen.venueName}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
