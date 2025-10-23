@@ -422,20 +422,6 @@ const ScreenOwnerDashboard = () => {
 
                       <div className="border-t pt-4 space-y-3">
                         <Label className="font-semibold">Content Display</Label>
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor={`show-ads-${screen.screenId}`} className="text-sm font-normal">
-                            Show Ads
-                          </Label>
-                          <Switch
-                            id={`show-ads-${screen.screenId}`}
-                            checked={settings.showAds ?? true}
-                            onCheckedChange={(checked) =>
-                              handleUpdateScreenSettings(screen.screenId, {
-                                showAds: checked,
-                              })
-                            }
-                          />
-                        </div>
                         <div className="space-y-2">
                           <Label className="text-sm">Display Mode</Label>
                           <Select
