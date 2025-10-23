@@ -321,21 +321,15 @@ const ScreenDisplay = () => {
       return;
     }
 
-    // Start tracking impression for current item
-    if (currentItem) {
+    // Start tracking impression for current item (only for ads)
+    if (currentItem && currentItem.type === 'ad' && currentItem.mediaFile) {
       // Get venue metadata for analytics
       const pairedScreen = getPairedScreen(screenId);
       const venue = pairedScreen?.venueId ? getVenueById(pairedScreen.venueId) : null;
 
-      let contentType = 'custom';
-      let contentId = currentItem.id;
-      let campaignId = 'custom';
-
-      if (currentItem.type === 'ad' && currentItem.mediaFile) {
-        contentType = currentItem.mediaFile.type;
-        contentId = currentItem.mediaFile.id;
-        campaignId = currentItem.campaignId || 'unknown';
-      }
+      const contentType = currentItem.mediaFile.type;
+      const contentId = currentItem.mediaFile.id;
+      const campaignId = currentItem.campaignId || 'unknown';
 
       const impressionId = startImpression(
         screenId,
